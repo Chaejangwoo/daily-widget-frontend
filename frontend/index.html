@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Widget</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- 만약 auth.css나 keywords.css의 일부 스타일이 index.html에도 필요하다면 함께 연결할 수 있습니다.
+         예: <link rel="stylesheet" href="css/auth.css"> 
+         하지만 보통은 style.css에 필요한 모든 스타일을 정의하거나, 
+         index.html에만 적용될 특정 스타일을 style.css에 추가합니다. -->
+</head>
+<body>
+    <header>
+        <h1><a href="index.html" style="color: white; text-decoration: none;">Daily Widget</a></h1>
+        <nav>
+            <!-- 비로그인 시 보여줄 내용 -->
+            <div id="auth-links-logged-out" style="display: none;"> <!-- 초기에는 JS로 제어하기 위해 숨김 -->
+                <a href="login.html"><button>로그인</button></a>
+                <a href="register.html"><button>회원가입</button></a>
+            </div>
+            <!-- 로그인 시 보여줄 내용 -->
+            <div id="auth-links-logged-in" style="display: none;"> <!-- 초기에는 JS로 제어하기 위해 숨김 -->
+                <span id="user-greeting-main" style="color: white; margin-right: 15px;"></span>
+                <a href="my_keywords.html"><button class="btn-secondary">관심 키워드</button></a>
+                <button id="logout-btn-main" class="btn-danger">로그아웃</button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="news-area">
+            <h2>오늘의 뉴스</h2> <!-- 이 부분은 로그인 상태에 따라 "OOO님을 위한 맞춤 뉴스" 등으로 변경될 수 있음 -->
+            <div class="filter-controls">
+                <input type="text" id="search-keyword" placeholder="키워드 검색">
+            </div>
+            <div id="news-list-container" class="news-list-container">
+                <!-- 뉴스 아이템들이 여기에 동적으로 추가됩니다. -->
+            </div>
+            <button id="load-more-btn" style="display: none;">더 보기</button>
+        </section>
+
+        <!-- 오른쪽 사이드바 (인기 토픽 등) - 현재는 숨겨져 있고, 필요시 JS로 표시 -->
+        <aside class="popular-topics" style="display: none;">
+            <h3>인기 토픽</h3>
+            <ul id="topic-list">
+                <!-- <li><a href="#">#AI</a></li> -->
+            </ul>
+        </aside>
+    </main>
+
+    <!-- 뉴스 원문 보기 모달 -->
+    <div id="news-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal-btn">×</span>
+            <iframe id="modal-iframe" src="" frameborder="0" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2024 Daily Widget. All rights reserved.</p>
+    </footer>
+
+    <script src="js/auth.js"></script> <!-- 공통 인증 스크립트 먼저 로드 -->
+    <script src="js/script.js"></script> <!-- index.html의 메인 로직 -->
+</body>
+</html>

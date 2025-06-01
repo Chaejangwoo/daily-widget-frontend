@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - Daily Widget</title>
+    <link rel="stylesheet" href="css/style.css"> <!-- 공통 CSS (전체 레이아웃 등) -->
+    <link rel="stylesheet" href="css/auth.css"> <!-- 인증 페이지용 CSS (폼 스타일 등) -->
+</head>
+<body>
+    <header>
+        <!-- index.html과 동일한 헤더를 사용하거나, 인증 페이지용 간소화된 헤더 사용 가능 -->
+        <h1><a href="index.html" style="color: white; text-decoration: none;">Daily Widget</a></h1>
+        <nav>
+            <a href="login.html"><button>로그인</button></a>
+            <!-- 또는 <a href="index.html"><button>홈으로</button></a> 등 -->
+        </nav>
+    </header>
+
+    <main class="auth-page"> <!-- auth.css 에서 이 클래스에 스타일 적용 -->
+        <section class="auth-form-container">
+            <h2>회원가입</h2>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="username">사용자 이름</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">이메일</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">비밀번호 (8자 이상)</label>
+                    <input type="password" id="password" name="password" required minlength="8">
+                </div>
+                <div class="form-group">
+                    <label for="password-confirm">비밀번호 확인</label>
+                    <input type="password" id="password-confirm" name="password-confirm" required>
+                </div>
+                <button type="submit" class="btn-submit">가입하기</button>
+            </form>
+            <p class="auth-link">이미 계정이 있으신가요? <a href="login.html">로그인</a></p>
+            <div id="message-area" class="message-area" role="alert" aria-live="assertive"></div>
+            <!-- 
+                role="alert" 와 aria-live="assertive" 는 스크린 리더 사용자에게
+                메시지 변경 시 바로 알려주도록 하는 접근성 속성입니다.
+            -->
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2024 Daily Widget. All rights reserved.</p>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/register.js"></script> <!-- register.js 파일 연결 -->
+</body>
+</html>

@@ -1,0 +1,457 @@
+/* frontend/css/style.css */
+
+/* Reset & Basic Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    background-color: #f8f9fa;
+    color: #343a40;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Header */
+header {
+    background: #343a40;
+    color: #fff;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: sticky; /* 스크롤 시 상단 고정 (선택 사항) */
+    top: 0;
+    z-index: 900; /* 다른 요소들보다 위에 오도록 */
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+/* 헤더 네비게이션 버튼 스타일 (추가/수정) */
+header nav #auth-links-logged-out,
+header nav #auth-links-logged-in {
+    display: flex; /* 내부 버튼들을 가로로 배치 */
+    align-items: center;
+}
+
+header nav button { /* 모든 헤더 버튼 기본 스타일 */
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 0.6rem 1rem;
+    margin-left: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease-in-out;
+    text-decoration: none; /* a 태그 안에 button 넣을 시 밑줄 제거 */
+}
+header nav button:hover {
+    background-color: #0056b3;
+}
+
+header nav .btn-secondary { /* 관심 키워드 버튼 */
+    background-color: #6c757d; /* 회색 계열 */
+}
+header nav .btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+header nav .btn-danger { /* 로그아웃 버튼 */
+    background-color: #dc3545; /* 빨간색 계열 */
+}
+header nav .btn-danger:hover {
+    background-color: #c82333;
+}
+
+/* 만약 a 태그로 버튼 모양을 낸다면 */
+header nav a button { /* 링크 내부 버튼에도 스타일 동일 적용 */
+    /* 스타일 동일 */
+}
+
+nav button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 0.6rem 1rem;
+    margin-left: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease-in-out;
+}
+
+nav button:hover {
+    background-color: #0056b3;
+}
+
+/* Main Content Area */
+main {
+    flex-grow: 1;
+    width: 100%;
+    max-width: 1200px; /* 전체 콘텐츠 최대 너비 */
+    margin: 20px auto;
+    padding: 0 1rem; /* 좌우 여백 */
+    display: flex;
+    gap: 20px;
+}
+
+/* News Area (Left/Main Column) */
+.news-area {
+    flex: 3; /* 공간 비율 (만약 오른쪽 사이드바가 있다면) */
+    /* 만약 사이드바가 없다면 flex: 1; 또는 width: 100%; */
+    background: #fff; /* 컨테이너 배경 */
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.news-area > h2 { /* 섹션 제목 (예: "오늘의 뉴스") */
+    font-size: 1.6rem;
+    color: #333;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+}
+
+.filter-controls {
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+#search-keyword {
+    flex-grow: 1;
+    padding: 0.8rem 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+#search-keyword:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* News List Container - 3열 Grid Layout */
+.news-list-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3개의 동일한 너비의 열 */
+    gap: 1.5rem; /* 아이템 간 간격 */
+}
+
+/* News Item Styling - Widget Style */
+.news-item {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+    aspect-ratio: 1 / 1; /* 정사각형 비율 */
+    overflow: hidden; /* 내용 넘치면 숨김 */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* 내부 요소 수직 정렬 */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    cursor: default; /* 링크 이외 부분은 기본 커서 */
+}
+
+.news-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.news-item h2 { /* 뉴스 아이템 내부 제목 */
+    font-size: 1.1rem; /* 위젯 크기에 맞게 조절 */
+    color: #007bff;
+    margin-bottom: 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* 보여줄 줄 수 */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.news-item .summary {
+    font-size: 0.85rem;
+    color: #495057;
+    margin-bottom: 0.8rem;
+    flex-grow: 1; /* 남은 공간 채우기 */
+    display: -webkit-box;
+    -webkit-line-clamp: 4; /* 보여줄 줄 수 (조절) */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+}
+
+.news-item .meta {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.news-item .keywords {
+    margin-bottom: 0.5rem;
+    /* 키워드가 너무 많으면 다음 줄로 넘어가도록 (선택 사항) */
+    /* display: flex; flex-wrap: wrap; gap: 0.3rem; */
+    /* 또는 현재처럼 한 줄로 하고 넘치면 숨김 */
+    overflow: hidden;
+    white-space: nowrap;
+    line-height: 1.5; /* 한 줄일 때 키워드 높이 확보 */
+}
+
+.news-item .keywords span {
+    background-color: #e9ecef;
+    color: #495057;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px; /* 타원형 */
+    font-size: 0.7rem;
+    margin-right: 0.3rem;
+    /* margin-bottom: 0.3rem;  flex-wrap 사용 시 필요 */
+    display: inline-block;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.news-item .keywords span:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+.news-item .original-link {
+    display: block; /* 영역 전체 클릭 */
+    margin-top: auto; /* 하단에 배치 */
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+    font-size: 0.8rem;
+    text-align: right; /* 오른쪽 정렬 */
+    cursor: pointer;
+}
+
+.news-item .original-link:hover {
+    text-decoration: underline;
+}
+
+/* Load More Button */
+#load-more-btn {
+    display: block;
+    width: 100%; /* 부모(.news-area) 너비에 맞춤 */
+    margin: 2rem 0 0; /* 상단 여백 */
+    padding: 0.8rem 1.5rem;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#load-more-btn:hover {
+    background-color: #218838;
+}
+
+
+/* Popular Topics (Right Column - 만약 사용한다면) */
+.popular-topics {
+    flex: 1; /* 공간 비율 */
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    align-self: flex-start; /* 내용이 짧아도 상단 정렬 */
+    display: none; /* 기본적으로 숨김, 필요시 JS로 block 처리 */
+}
+
+.popular-topics h3 {
+    font-size: 1.2rem;
+    color: #333;
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.popular-topics ul {
+    list-style: none;
+    padding: 0;
+}
+
+.popular-topics li a {
+    text-decoration: none;
+    color: #007bff;
+    display: block;
+    padding: 0.6rem 0;
+    border-bottom: 1px dashed #e9ecef;
+    font-size: 0.9rem;
+}
+.popular-topics li:last-child a {
+    border-bottom: none;
+}
+.popular-topics li a:hover {
+    color: #0056b3;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding-left: 0.5rem;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+    padding-top: 30px; /* 모달 상단 여유 공간 */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 900px; /* 모달 최대 너비 */
+    height: calc(100% - 60px); /* 상하단 여백 고려한 높이, 또는 90% */
+    border-radius: 8px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.close-modal-btn {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1; /* 정확한 위치 위해 */
+}
+
+.close-modal-btn:hover,
+.close-modal-btn:focus {
+    color: black;
+    text-decoration: none;
+}
+
+#modal-iframe {
+    width: 100%;
+    height: 100%; /* .modal-content의 높이를 기준으로 꽉 참 */
+    border: none;
+    flex-grow: 1; /* .modal-content 내부에서 남은 공간 차지 */
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 1.5rem;
+    background: #343a40;
+    color: #adb5bd;
+    margin-top: auto; /* body.display:flex + body.flex-direction:column 일 때 하단 고정 */
+    font-size: 0.9rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) { /* 데스크탑 -> 태블릿 전환점 */
+    .news-list-container {
+        grid-template-columns: repeat(2, 1fr); /* 2열로 변경 */
+    }
+    main {
+        flex-direction: column; /* 사이드바 사용 시 세로로 쌓이도록 */
+    }
+    .news-area, .popular-topics {
+        flex: none; /* flex 비율 무시하고 전체 너비 사용 */
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) { /* 태블릿 -> 모바일 전환점 */
+    header {
+        padding: 1rem; /* 헤더 내부 여백 줄임 */
+    }
+    .news-list-container {
+        /* 모바일에서는 한 줄에 1개 또는 2개 (선택) */
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* 최소 너비 보장, 자동 채움 */
+        /* 또는 grid-template-columns: 1fr; 로 한 줄에 하나씩 */
+        gap: 1rem; /* 모바일에서 아이템 간 간격 줄임 */
+    }
+
+    .news-item {
+        padding: 0.8rem; /* 위젯 내부 여백 줄임 */
+    }
+
+    .news-item h2 {
+        font-size: 1rem;
+        -webkit-line-clamp: 2;
+    }
+
+    .news-item .summary {
+        font-size: 0.8rem;
+        -webkit-line-clamp: 3;
+    }
+    .modal-content {
+        width: 95%;
+        height: calc(100% - 40px); /* 상하 여백 고려 */
+        padding: 15px;
+    }
+    .close-modal-btn {
+        top: 8px;
+        right: 15px;
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) { /* 작은 모바일 화면 */
+    header {
+        flex-direction: column; /* 헤더 내부 요소 세로 정렬 */
+        gap: 0.5rem;
+        padding: 0.8rem;
+    }
+    header h1 {
+        font-size: 1.5rem;
+    }
+    nav {
+        margin-top: 0.5rem;
+        /* 버튼들 가로 스크롤 가능하게 하거나, 세로로 배치 등 고려 */
+    }
+
+    .news-list-container {
+        grid-template-columns: 1fr; /* 한 줄에 하나씩 */
+    }
+
+    .news-item .keywords span {
+        font-size: 0.65rem;
+    }
+
+    .modal-content {
+        padding: 10px;
+        height: calc(100% - 20px);
+    }
+    .close-modal-btn {
+        top: 5px;
+        right: 10px;
+    }
+}

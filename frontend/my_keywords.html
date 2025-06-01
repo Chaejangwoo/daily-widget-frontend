@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나의 관심 키워드 - Daily Widget</title>
+    <link rel="stylesheet" href="css/style.css"> <!-- 공통 CSS -->
+    <link rel="stylesheet" href="css/keywords.css"> <!-- 키워드 페이지용 CSS (새로 생성) -->
+</head>
+<body>
+    <header>
+        <h1><a href="index.html" style="color: white; text-decoration: none;">Daily Widget</a></h1>
+        <nav>
+            <span id="user-greeting" style="color: white; margin-right: 15px;"></span>
+            <button id="logout-btn">로그아웃</button>
+            <!-- 또는 <a href="index.html"><button>뉴스 홈</button></a> -->
+        </nav>
+    </header>
+
+    <main class="keywords-page">
+        <section class="keywords-container">
+            <h2>나의 관심 키워드 설정</h2>
+            <p>관심 있는 키워드를 선택하거나 직접 추가해주세요. (최대 5개 선택 가능)</p>
+            
+            <div class="predefined-keywords">
+                <h3>추천 키워드:</h3>
+                <div id="keyword-options-area" class="keyword-options">
+                    <!-- 예시: JS로 동적 생성 또는 미리 정의 -->
+                    <!-- <button class="keyword-btn" data-keyword="AI">#AI</button> -->
+                </div>
+            </div>
+
+            <div class="custom-keywords">
+                <h3>직접 추가:</h3>
+                <input type="text" id="custom-keyword-input" placeholder="키워드를 입력하고 Enter 또는 추가 버튼">
+                <button id="add-keyword-btn" class="btn-secondary">추가</button>
+            </div>
+
+            <div class="selected-keywords-area">
+                <h3>선택된 키워드:</h3>
+                <div id="selected-keywords-display" class="selected-keywords-display">
+                    <!-- 선택된 키워드가 여기에 표시됩니다 -->
+                </div>
+            </div>
+
+            <button id="save-keywords-btn" class="btn-primary">관심 키워드 저장</button>
+            <div id="message-area" class="message-area" role="alert" aria-live="assertive"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2024 Daily Widget. All rights reserved.</p>
+    </footer>
+
+    <script src="js/auth.js"></script> <!-- 공통 인증 스크립트 먼저 로드 -->
+    <script src="js/my_keywords.js"></script> <!-- 키워드 페이지용 JS -->
+</body>
+</html>

@@ -1,0 +1,45 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json # npm 5+ 버전에서는 package-lock.json을 커밋하는 것을 권장하기도 합니다.
+                  # 팀 정책에 따라 포함하거나 제외할 수 있습니다. 지금은 포함하는 것으로 가정하고 주석 처리합니다.
+                  # 만약 제외하고 싶다면 주석을 해제하세요.
+# .pnp.js
+# .pnp.loader.mjs
+
+# Environment variables
+.env
+.env*.local
+.env*.development
+.env*.test
+.env*.production
+!.env.example # .env.example 파일은 포함시키고 싶을 때 (템플릿 역할)
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Log files
+logs/
+*.log
+
+# Build output
+dist/
+build/
+out/
+
+# Optional: Sequelize-specific (if using Sequelize CLI migrations/seeders output elsewhere)
+# sequelize-meta.json

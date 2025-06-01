@@ -1,0 +1,162 @@
+/* frontend/css/keywords.css */
+.keywords-page main {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.keywords-container {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 600px; /* 컨테이너 너비 */
+}
+
+.keywords-container h2 {
+    text-align: center;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+.keywords-container > p { /* h2 바로 아래 설명 문구 */
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.predefined-keywords,
+.custom-keywords,
+.selected-keywords-area {
+    margin-bottom: 1.5rem;
+}
+
+.predefined-keywords h3,
+.custom-keywords h3,
+.selected-keywords-area h3 {
+    font-size: 1.1rem;
+    color: #444;
+    margin-bottom: 0.8rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.3rem;
+}
+
+.keyword-options {
+    display: flex;
+    flex-wrap: wrap; /* 키워드 버튼 여러 줄로 표시 */
+    gap: 0.5rem; /* 버튼 간 간격 */
+}
+
+.keyword-btn {
+    background-color: #e9ecef;
+    color: #495057;
+    border: 1px solid #ced4da;
+    padding: 0.4rem 0.8rem;
+    border-radius: 15px; /* 타원형 버튼 */
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.keyword-btn:hover {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.keyword-btn.selected { /* 선택된 키워드 버튼 스타일 */
+    background-color: #007bff;
+    color: white;
+    border-color: #0056b3;
+    font-weight: bold;
+}
+
+.custom-keywords {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#custom-keyword-input {
+    flex-grow: 1;
+    padding: 0.7rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.btn-secondary { /* "추가" 버튼 등 보조 버튼 */
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 0.7rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+}
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.selected-keywords-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 1px dashed #ddd; /* 선택된 키워드 영역 표시 */
+    min-height: 30px; /* 최소 높이 */
+    border-radius: 4px;
+}
+
+.selected-keyword-tag {
+    background-color: #007bff;
+    color: white;
+    padding: 0.3rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+}
+
+.selected-keyword-tag .remove-keyword-btn {
+    background: none;
+    border: none;
+    color: white;
+    margin-left: 0.5rem;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.btn-primary { /* "저장" 버튼 등 주요 버튼 */
+    width: 100%;
+    padding: 0.9rem;
+    background-color: #28a745; /* 초록색 계열 */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 1rem; /* 다른 요소와 간격 */
+}
+
+.btn-primary:hover {
+    background-color: #218838;
+}
+
+/* 메시지 영역 스타일 (auth.css와 동일하게 사용 가능하나, 중복 방지 위해 여기에도 정의) */
+.message-area {
+    margin-top: 1rem;
+    padding: 0.8rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    text-align: center;
+    display: none;
+}
+.message-area.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; display: block; }
+.message-area.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; display: block; }
