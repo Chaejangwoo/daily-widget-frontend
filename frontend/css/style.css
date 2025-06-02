@@ -289,7 +289,12 @@ main {
 .news-item .original-link:hover {
     text-decoration: underline;
 }
-
+.empty-message {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+    font-style: italic;
+}
 
 /* Load More Button ... (이하 동일) ... */
 #load-more-btn {

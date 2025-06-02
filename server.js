@@ -8,6 +8,7 @@ const bcrypt = require('bcryptjs'); // 비밀번호 해싱을 위한 bcryptjs
 const jwt = require('jsonwebtoken'); // JWT 토큰 생성을 위한 jsonwebtoken
 const db = require('./models'); // ./models/index.js 에서 내보낸 db 객체 (sequelize 인스턴스 포함)
 const { protect } = require('./middleware/authMiddleware'); // 인증 미들웨어 가져오기
+const newsRoutes = require('./routes/newsRoutes'); // 뉴스 라우트 불러오기
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -189,7 +190,7 @@ app.put('/api/users/me/interests', protect, async (req, res) => {
         res.status(500).json({ success: false, message: '서버 오류로 관심사 업데이트에 실패했습니다.' });
     }
 });
-
+app.use('/api/news', newsRoutes); // '/api/news' 경로로 들어오는 요청은 newsRoutes가 처리
 
 // ----- 데이터베이스 연결 (나중에 추가될 부분) -----
 db.sequelize.sync({ force: false }) // force: true 이면 개발 중 테이블 초기화 (주의!)

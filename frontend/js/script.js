@@ -1,266 +1,380 @@
 // frontend/js/script.js
 document.addEventListener('DOMContentLoaded', () => {
-    // auth.js가 먼저 로드되어 isLoggedIn, getUserInfo 함수를 사용할 수 있다고 가정합니다.
     console.log('Daily Widget 프론트엔드 스크립트(script.js) 시작!');
 
+    // --- 전역 변수 및 상수 ---
+    const API_BASE_URL = 'http://localhost:5001/api'; // 백엔드 API 기본 URL
     const newsListContainer = document.getElementById('news-list-container');
     const loadMoreBtn = document.getElementById('load-more-btn');
     const searchInput = document.getElementById('search-keyword');
     const newsSectionTitle = document.querySelector('.news-area > h2');
 
+    // Modal 관련 요소
     const modal = document.getElementById('news-modal');
     const modalIframe = document.getElementById('modal-iframe');
     const closeModalBtn = document.querySelector('.close-modal-btn');
 
-    const mockNewsData = [
-        { id: 1, title: 'AI, 세상을 바꾸는 핵심 기술', summary: '인공지능(AI)은 이미 우리 생활 깊숙이 들어와 있으며, 앞으로 더 큰 변화를 가져올 것으로 예상됩니다. 이 기사에서는 AI 기술의 최신 동향과 미래 전망을 다룹니다. 특히 딥러닝, 자연어 처리, 컴퓨터 비전 등의 발전은 눈부시며, 다양한 산업에 혁신을 가져오고 있습니다. 하지만 윤리적 문제와 일자리 변화에 대한 고민도 함께 필요합니다. AI의 발전은 멈추지 않을 것이며, 우리는 이를 슬기롭게 활용해야 합니다.', source: '테크뉴스', date: '2024-07-26', keywords: ['AI', '미래기술', '혁신'], originalLink: './article1.html' },
-        { id: 2, title: '여름철 건강 관리, 이렇게 하세요! 길고 더운 여름을 건강하게 보내는 비법 대공개', summary: '무더위가 계속되는 여름철, 건강 관리에 각별한 주의가 필요합니다. 전문가들이 조언하는 여름철 건강 수칙을 알아봅니다. 충분한 수분 섭취, 적절한 냉방, 자외선 차단, 위생적인 식생활, 그리고 규칙적인 생활과 충분한 휴식이 중요합니다. 특히 노약자는 더욱 신경 써야 하며, 야외 활동 시에는 모자와 선크림을 잊지 마세요. 건강한 여름나기를 위한 팁들을 자세히 소개합니다.', source: '헬스투데이', date: '2024-07-26', keywords: ['건강', '여름', '생활정보', '폭염'], originalLink: './article2.html' },
-        { id: 3, title: '새로운 우주 탐사선 "오디세우스" 발사 성공, 화성 너머 미지의 세계로', summary: 'OO국에서 개발한 차세대 우주 탐사선 "오디세우스"가 성공적으로 발사되어 인류의 우주 탐사 역사에 새로운 장을 열었습니다. 이 탐사선은 화성 및 그 너머의 천체를 탐사할 예정이며, 생명체 존재 가능성 등 중요한 과학적 데이터를 수집할 것으로 기대됩니다. 수년간의 준비 끝에 발사된 오디세우스는 최첨단 장비를 탑재하고 있습니다.', source: '사이언스데일리', date: '2024-07-25', keywords: ['우주', '과학', '탐사', '오디세우스'], originalLink: './article_placeholder.html' },
-        // ... (나머지 목업 데이터는 이전과 동일하게 유지하거나 필요에 따라 수정) ...
-        { id: 4, title: '글로벌 경제, 불확실성 속 성장 전망', summary: '세계 경제는 여러 도전 과제에 직면해 있지만, 일부 지역에서는 회복세를 보이며 점진적인 성장이 예상됩니다. 인플레이션 압력, 공급망 문제, 지정학적 긴장 등이 주요 변수로 작용하고 있으며, 각국 중앙은행의 정책 대응이 주목됩니다.', source: '경제일보', date: '2024-07-25', keywords: ['경제', '글로벌', '전망'], originalLink: './article_placeholder.html' },
-        { id: 5, title: '친환경 에너지로의 전환, 가속화되나', summary: '기후 변화 대응을 위한 전 세계적인 노력으로 친환경 에너지로의 전환이 더욱 중요해지고 있습니다. 태양광, 풍력 등 재생에너지 기술 발전과 함께 정부 정책 지원이 확대되면서 에너지 시장의 패러다임이 바뀌고 있습니다.', source: '환경뉴스', date: '2024-07-24', keywords: ['환경', '에너지', '기후변화', 'AI'], originalLink: './article_placeholder.html' },
-        { id: 6, title: 'K-컬처, 세계를 매료시키다', summary: '한국의 드라마, 영화, 음악 등이 전 세계적으로 큰 인기를 얻으며 문화적 영향력을 확대하고 있습니다. OTT 플랫폼을 통한 콘텐츠 확산과 팬덤 문화의 성장이 이러한 현상을 더욱 가속화하고 있습니다.', source: '문화일보', date: '2024-07-23', keywords: ['한류', '문화', 'K컬처'], originalLink: './article_placeholder.html' }
-        // ... 더 많은 목업 데이터
-    ];
+    let currentPage = 1;
+    const itemsPerPage = 9;
+    let isLoading = false;
+    let totalPages = 1;
+    let currentSearchTerm = '';
 
-    let currentNews = [];
-    let itemsToShow = 9;
-    const itemsPerLoad = 9;
-    let activeDataSource = [...mockNewsData];
+    // --- 함수 정의 ---
 
-    function getPersonalizedNewsData() {
-        let personalizedData = [...mockNewsData];
-        if (typeof isLoggedIn === 'function' && isLoggedIn()) {
-            const userInfo = typeof getUserInfo === 'function' ? getUserInfo() : null;
-            const userInterestsString = localStorage.getItem('userInterests');
-            const userInterests = userInterestsString ? JSON.parse(userInterestsString) : [];
+    /**
+     * 뉴스 아이템 HTML 요소를 생성합니다.
+     * @param {object} item - 뉴스 데이터 객체
+     * @returns {HTMLElement} 생성된 article 요소
+     */
+    function renderNewsItem(item) {
+        const article = document.createElement('article');
+        article.classList.add('news-item');
 
-            if (newsSectionTitle && userInfo && userInfo.username) {
-                newsSectionTitle.textContent = `${userInfo.username}님을 위한 맞춤 뉴스`;
-            } else if (newsSectionTitle) {
-                newsSectionTitle.textContent = "추천 뉴스";
-            }
+        const titleElement = document.createElement('h2');
+        titleElement.textContent = item.title || '제목 없음';
+        article.appendChild(titleElement);
 
-            if (userInterests.length > 0) {
-                personalizedData.sort((a, b) => {
-                    let scoreA = 0;
-                    let scoreB = 0;
-                    userInterests.forEach(interest => {
-                        if (a.keywords.map(k => k.toLowerCase()).includes(interest.toLowerCase())) scoreA++;
-                        if (b.keywords.map(k => k.toLowerCase()).includes(interest.toLowerCase())) scoreB++;
-                        if (a.title.toLowerCase().includes(interest.toLowerCase())) scoreA += 0.5;
-                        if (b.title.toLowerCase().includes(interest.toLowerCase())) scoreB += 0.5;
-                    });
-                    return scoreB - scoreA;
-                });
-            }
-        } else {
-            if (newsSectionTitle) newsSectionTitle.textContent = "오늘의 뉴스";
-        }
-        return personalizedData;
-    }
+        const summaryWrapper = document.createElement('div');
+        summaryWrapper.classList.add('summary-wrapper');
 
-function renderNewsItem(item) {
-    const article = document.createElement('article');
-    article.classList.add('news-item');
+        const summaryElement = document.createElement('p');
+        summaryElement.classList.add('summary');
+        summaryElement.textContent = item.content || '';
+        summaryWrapper.appendChild(summaryElement);
+        article.appendChild(summaryWrapper);
 
-    const titleElement = document.createElement('h2');
-    titleElement.textContent = item.title;
-    article.appendChild(titleElement); // 먼저 DOM에 추가해야 높이 계산 가능
+        const toggleSummaryBtn = document.createElement('button');
+        toggleSummaryBtn.classList.add('toggle-summary-btn');
+        toggleSummaryBtn.textContent = '더보기';
+        toggleSummaryBtn.setAttribute('aria-expanded', 'false');
+        toggleSummaryBtn.style.display = 'none'; // 초기에는 숨김
+        article.appendChild(toggleSummaryBtn);
 
-    // --- 제목 줄 수에 따른 요약문 줄 수 조절 로직 ---
-    // titleElement가 DOM에 추가된 후, 잠시 기다렸다가 높이를 계산해야 정확할 수 있음
-    // requestAnimationFrame을 사용하거나, 간단히는 바로 계산 시도
-    const titleStyle = window.getComputedStyle(titleElement);
-    const titleLineHeight = parseFloat(titleStyle.lineHeight);
-    const titleHeight = titleElement.offsetHeight; // 또는 scrollHeight
-    const titleLines = Math.round(titleHeight / titleLineHeight);
-
-    const summaryWrapper = document.createElement('div');
-    summaryWrapper.classList.add('summary-wrapper');
-
-    const summaryElement = document.createElement('p');
-    summaryElement.classList.add('summary');
-    summaryElement.textContent = item.summary;
-
-    if (titleLines > 2) { // 제목이 2줄을 초과하면 (즉, 3줄 이상이면)
-        summaryElement.classList.add('summary-shorten'); // 요약문 줄이는 클래스 추가
-    }
-    // --- 로직 끝 ---
-
-    summaryWrapper.appendChild(summaryElement);
-
-    const toggleSummaryBtn = document.createElement('button');
-    toggleSummaryBtn.classList.add('toggle-summary-btn');
-    toggleSummaryBtn.textContent = '더보기';
-    toggleSummaryBtn.setAttribute('aria-expanded', 'false');
-
-    // 더보기 버튼 표시 여부 (이전과 동일하게 임시 로직 또는 항상 표시)
-    if (item.summary.length < 150 && item.summary.split('\n').length < (titleLines > 2 ? 4 : 5) ) { // 기준 줄 수 동적 변경
-        // toggleSummaryBtn.style.display = 'none';
-    }
-
-    toggleSummaryBtn.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const isCardExpanded = article.classList.toggle('expanded-card');
-        toggleSummaryBtn.textContent = isCardExpanded ? '접기' : '더보기';
-        toggleSummaryBtn.setAttribute('aria-expanded', isCardExpanded.toString());
-    });
-
-    // 나머지 요소들 생성 및 추가 (meta, keywords, originalLink)
-    const metaElement = document.createElement('div');
-    metaElement.classList.add('meta');
-    metaElement.innerHTML = `<span class="source">${item.source}</span> | <span class="date">${item.date}</span>`;
-
-    const keywordsContainer = document.createElement('div');
-    keywordsContainer.classList.add('keywords');
-    item.keywords.forEach(keyword => {
-        const keywordSpan = document.createElement('span');
-        keywordSpan.textContent = `#${keyword}`;
-        keywordSpan.dataset.keyword = keyword;
-        keywordSpan.addEventListener('click', (event) => {
+        toggleSummaryBtn.addEventListener('click', (event) => {
             event.stopPropagation();
-            handleKeywordClick(keyword);
+            const isCardExpanded = article.classList.toggle('expanded-card');
+            toggleSummaryBtn.textContent = isCardExpanded ? '접기' : '더보기';
+            toggleSummaryBtn.setAttribute('aria-expanded', isCardExpanded.toString());
+            if (isCardExpanded) {
+                toggleSummaryBtn.style.display = 'inline';
+            } else {
+                // 접었을 때 다시 잘림 여부 체크 (선택적)
+                // checkAndShowToggleBtn(summaryElement, toggleSummaryBtn, numLinesAllowed);
+            }
         });
-        keywordsContainer.appendChild(keywordSpan);
-    });
 
-    const linkElement = document.createElement('a');
-    linkElement.href = "#";
-    linkElement.classList.add('original-link');
-    linkElement.textContent = '원문 보기';
-    linkElement.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        openModalWithArticle(item.originalLink);
-    });
+        const metaElement = document.createElement('div');
+        metaElement.classList.add('meta');
+        const publishedDate = item.publishedDate ? new Date(item.publishedDate).toLocaleDateString() : '날짜 미상';
+        metaElement.innerHTML = `<span class="source">${item.sourceName || '출처 미상'}</span> | <span class="date">${publishedDate}</span>`;
+        article.appendChild(metaElement);
 
-    // DOM 요소 추가 순서 유의
-    // article.appendChild(titleElement); // 위에서 이미 추가됨
-    article.appendChild(summaryWrapper);
-    article.appendChild(toggleSummaryBtn);
-    article.appendChild(metaElement);
-    article.appendChild(keywordsContainer);
-    article.appendChild(linkElement);
+        const keywordsContainer = document.createElement('div');
+        keywordsContainer.classList.add('keywords');
+        // 백엔드 API 응답에 keywords가 포함되어 있다면 아래 로직 사용
+        // 현재 API에서 keywords를 제공하지 않으므로, 이 부분은 주석 처리하거나 다른 방식 사용
+        //if (item.keywords && Array.isArray(item.keywords)) {
+        //    item.keywords.forEach(keyword => {
+        //        const keywordSpan = document.createElement('span');
+        //        keywordSpan.textContent = `#${keyword}`;
+        //        keywordSpan.dataset.keyword = keyword;
+        //        keywordSpan.addEventListener('click', (event) => {
+        //            event.stopPropagation();
+        //            handleKeywordClick(keyword);
+        //        });
+        //        keywordsContainer.appendChild(keywordSpan);
+        //    });
+        //}
+        article.appendChild(keywordsContainer);
 
-    return article;
-}
+        const linkElement = document.createElement('a');
+        linkElement.href = item.originalUrl || "#"; // originalUrl이 없다면 #으로 처리
+        linkElement.classList.add('original-link');
+        linkElement.textContent = '원문 보기';
+        linkElement.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (item.originalUrl) {
+                openModalWithArticle(item.originalUrl);
+            } else {
+                alert('기사 원문 주소를 찾을 수 없습니다.');
+            }
+        });
+        article.appendChild(linkElement);
 
+        return article;
+    }
+
+    /**
+     * 요약문이 잘렸는지 확인하고 "더보기" 버튼 표시 여부를 결정합니다.
+     * @param {HTMLElement} summaryElement - 요약문 p 요소
+     * @param {HTMLElement} toggleButton - 더보기 버튼 요소
+     * @param {number} numLinesAllowedByCss - CSS에서 설정된 요약문의 최대 줄 수
+     */
+    function checkAndShowToggleBtn(summaryElement, toggleButton, numLinesAllowedByCss) {
+        if (!summaryElement || !toggleButton) return;
+
+        // --- 기존 스타일 저장 ---
+        const originalStyles = {
+            webkitLineClamp: summaryElement.style.webkitLineClamp,
+            display: summaryElement.style.display,
+            overflow: summaryElement.style.overflow,
+        };
+
+        // --- 임시로 line-clamp 해제하여 실제 scrollHeight 측정 ---
+        summaryElement.style.webkitLineClamp = 'unset';
+        summaryElement.style.display = 'block';
+        summaryElement.style.overflow = 'visible';
+
+        requestAnimationFrame(() => {
+            const scrollHeight = summaryElement.scrollHeight;
+
+            // --- 원래 스타일로 복원 ---
+            summaryElement.style.webkitLineClamp = originalStyles.webkitLineClamp || numLinesAllowedByCss.toString();
+            summaryElement.style.display = originalStyles.display || '-webkit-box';
+            summaryElement.style.overflow = originalStyles.overflow || 'hidden';
+
+            // --- 높이 비교 로직 ---
+            const computedStyle = window.getComputedStyle(summaryElement);
+            let lineHeight = parseFloat(computedStyle.lineHeight);
+            if (isNaN(lineHeight)) { // lineHeight가 'normal'인 경우 처리
+                lineHeight = parseFloat(computedStyle.fontSize) * 1.4;
+            }
+            const expectedVisibleHeight = lineHeight * numLinesAllowedByCss;
+            const tolerance = 2;
+
+            // --- 디버깅 로그 ---
+            console.groupCollapsed(`Check toggle for: ${summaryElement.textContent.substring(0, 20)}...`);
+            console.log('numLinesAllowedByCss:', numLinesAllowedByCss);
+            console.log('scrollHeight (unclamped):', scrollHeight);
+            console.log('lineHeight (calculated):', lineHeight);
+            console.log('expectedVisibleHeight (for clamped lines):', expectedVisibleHeight);
+            const condition = scrollHeight > expectedVisibleHeight + tolerance;
+            console.log('Condition (scrollHeight > expectedVisibleHeight + tolerance):', condition);
+            console.groupEnd();
+
+            if (condition) {
+                toggleButton.style.display = 'inline';
+            } else {
+                toggleButton.style.display = 'none';
+            }
+        });
+    }
+
+
+    /**
+     * 뉴스 목록을 화면에 표시합니다. (기존 목록을 대체)
+     * @param {Array} newsArray - 표시할 뉴스 데이터 배열
+     */
     function displayNews(newsArray) {
         if (!newsListContainer) return;
-        newsListContainer.innerHTML = '';
+        newsListContainer.innerHTML = ''; // 기존 목록 비우기
+
+        if (!newsArray || newsArray.length === 0) {
+            newsListContainer.innerHTML = `<p class="empty-message">${currentSearchTerm ? `"${currentSearchTerm}"에 대한 검색 결과가 없습니다.` : '표시할 뉴스가 없습니다.'}</p>`;
+            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+            return;
+        }
+
         newsArray.forEach(item => {
             const newsElement = renderNewsItem(item);
             newsListContainer.appendChild(newsElement);
+
+            // DOM에 추가된 후 "더보기" 버튼 표시 여부 결정
+            requestAnimationFrame(() => {
+                const summaryElementFromDOM = newsElement.querySelector('.summary');
+                const toggleSummaryBtnFromDOM = newsElement.querySelector('.toggle-summary-btn');
+                const titleElementFromDOM = newsElement.querySelector('h2');
+
+                if (summaryElementFromDOM && toggleSummaryBtnFromDOM && titleElementFromDOM) {
+                    // 제목 줄 수에 따라 요약문 줄 수 동적 결정
+                    const titleStyle = window.getComputedStyle(titleElementFromDOM);
+                    const titleLineHeight = parseFloat(titleStyle.lineHeight) || (parseFloat(titleStyle.fontSize) * 1.3);
+                    const titleHeight = titleElementFromDOM.offsetHeight;
+                    const titleLines = titleLineHeight > 0 ? Math.round(titleHeight / titleLineHeight) : 0;
+
+                    let allowedSummaryLines = 4; // 기본 4줄
+                    if (titleLines > 2) {
+                        summaryElementFromDOM.classList.add('summary-shorten');
+                        allowedSummaryLines = 3; // 제목 길면 3줄
+                    } else {
+                        summaryElementFromDOM.classList.remove('summary-shorten');
+                    }
+
+                    // checkAndShowToggleBtn 함수 호출 전에 summaryElement에 line-clamp 스타일 적용
+                    summaryElementFromDOM.style.webkitLineClamp = allowedSummaryLines.toString();
+                    summaryElementFromDOM.style.display = '-webkit-box';
+                    summaryElementFromDOM.style.webkitBoxOrient = 'vertical';
+                    summaryElementFromDOM.style.overflow = 'hidden';
+                    console.log('Calling checkAndShowToggleBtn for:', summaryElementFromDOM.textContent.substring(0,20)); // <<-- 이 로그가 뜨는지 확인!
+
+                    checkAndShowToggleBtn(summaryElementFromDOM, toggleSummaryBtnFromDOM, allowedSummaryLines);
+                } else {
+            // --- 만약 이 else 블록이 실행된다면, 필요한 DOM 요소를 찾지 못한 것 ---
+            console.error('하나 이상의 필수 요소를 찾지 못해 checkAndShowToggleBtn을 호출할 수 없습니다.');
+            console.log('summaryElementFromDOM:', summaryElementFromDOM);
+            console.log('toggleSummaryBtnFromDOM:', toggleSummaryBtnFromDOM);
+            console.log('titleElementFromDOM:', titleElementFromDOM);
+        }
+            });
         });
     }
 
+    /**
+     * "더 보기" 버튼 표시 여부를 업데이트합니다.
+     */
     function updateLoadMoreButtonVisibility() {
         if (!loadMoreBtn) return;
-        if (itemsToShow < activeDataSource.length) {
+        if (currentPage < totalPages) {
             loadMoreBtn.style.display = 'block';
         } else {
             loadMoreBtn.style.display = 'none';
         }
     }
 
-    function loadInitialNews() {
-        activeDataSource = getPersonalizedNewsData();
-        itemsToShow = 9;
-        currentNews = activeDataSource.slice(0, itemsToShow);
-        displayNews(currentNews);
-        updateLoadMoreButtonVisibility();
-        displayPopularTopics(); // 인기 토픽 표시 함수 호출
+    /**
+     * 초기 뉴스 목록을 로드하거나 검색을 수행합니다.
+     * @param {string} searchTerm - 검색어 (선택 사항)
+     */
+    async function loadInitialNews(searchTerm = '') {
+        if (isLoading) return;
+        isLoading = true;
+        currentSearchTerm = searchTerm;
+        if (loadMoreBtn) loadMoreBtn.textContent = '로딩 중...';
+
+        currentPage = 1;
+
+        try {
+            let apiUrl = `${API_BASE_URL}/news?page=${currentPage}&limit=${itemsPerPage}&sortBy=publishedDate&sortOrder=DESC`;
+            if (searchTerm) {
+                apiUrl += `&keyword=${encodeURIComponent(searchTerm)}`;
+            }
+            // TODO: 개인화 API 연동 (미구현)
+
+            // 헤더 및 뉴스 섹션 제목 업데이트
+            if (typeof updateHeaderUI === 'function') updateHeaderUI();
+            const userInfo = typeof getUserInfo === 'function' ? getUserInfo() : null;
+            if (newsSectionTitle) {
+                if (searchTerm) {
+                    newsSectionTitle.textContent = `"${searchTerm}" 검색 결과`;
+                } else if (typeof isLoggedIn === 'function' && isLoggedIn() && userInfo && userInfo.username) {
+                    newsSectionTitle.textContent = `${userInfo.username}님을 위한 맞춤 뉴스`; // 임시 제목
+                } else {
+                    newsSectionTitle.textContent = "최신 뉴스"; // 비로그인 시
+                }
+            }
+
+            console.log('Requesting API URL (Initial):', apiUrl);
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                throw new Error(`뉴스 로드 실패: ${errorData.message || response.status}`);
+            }
+            const data = await response.json();
+
+            displayNews(data.news || []); // undefined일 경우 빈 배열 전달
+            totalPages = data.totalPages || 1;
+            updateLoadMoreButtonVisibility();
+
+        } catch (error) {
+            console.error('초기 뉴스 로드 중 오류:', error);
+            if (newsListContainer) newsListContainer.innerHTML = `<p class="empty-message">뉴스를 불러오는 중 오류가 발생했습니다: ${error.message}</p>`;
+            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+        } finally {
+            isLoading = false;
+            if (loadMoreBtn) loadMoreBtn.textContent = '더 보기';
+        }
     }
 
-    function loadMoreNews() {
-        itemsToShow += itemsPerLoad;
-        currentNews = activeDataSource.slice(0, Math.min(itemsToShow, activeDataSource.length));
-        displayNews(currentNews);
-        updateLoadMoreButtonVisibility();
+    /**
+     * 추가 뉴스 목록을 로드합니다 ("더 보기" 기능).
+     */
+    async function loadMoreNews() {
+        if (isLoading || currentPage >= totalPages) return;
+        isLoading = true;
+        if (loadMoreBtn) loadMoreBtn.textContent = '로딩 중...';
+
+        currentPage++;
+
+        try {
+            let apiUrl = `${API_BASE_URL}/news?page=${currentPage}&limit=${itemsPerPage}&sortBy=publishedDate&sortOrder=DESC`;
+            if (currentSearchTerm) {
+                apiUrl += `&keyword=${encodeURIComponent(currentSearchTerm)}`;
+            }
+            // TODO: 개인화 관련 파라미터 추가 (필요시)
+
+            console.log('Requesting API URL (More):', apiUrl);
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                throw new Error('추가 뉴스 로드 실패');
+            }
+            const data = await response.json();
+
+            if (data.news && data.news.length > 0) {
+                data.news.forEach(item => {
+                    const newsElement = renderNewsItem(item);
+                    if (newsListContainer) newsListContainer.appendChild(newsElement);
+
+                    // 추가된 뉴스 아이템에 대해서도 "더보기" 버튼 로직 실행
+                    requestAnimationFrame(() => {
+                        const summaryElementFromDOM = newsElement.querySelector('.summary');
+                        const toggleSummaryBtnFromDOM = newsElement.querySelector('.toggle-summary-btn');
+                        const titleElementFromDOM = newsElement.querySelector('h2');
+                        if (summaryElementFromDOM && toggleSummaryBtnFromDOM && titleElementFromDOM) {
+                             // 제목 줄 수에 따라 요약문 클래스 적용
+                            const titleStyle = window.getComputedStyle(titleElementFromDOM);
+                            const titleLineHeight = parseFloat(titleStyle.lineHeight) || (parseFloat(titleStyle.fontSize) * 1.3);
+                            const titleHeight = titleElementFromDOM.offsetHeight;
+                            const titleLines = titleLineHeight > 0 ? Math.round(titleHeight / titleLineHeight) : 0;
+                            if (titleLines > 2) summaryElementFromDOM.classList.add('summary-shorten');
+                            else summaryElementFromDOM.classList.remove('summary-shorten');
+
+                            // checkAndShowToggleBtn 호출 전에 summaryElement에 line-clamp 스타일 적용
+                            summaryElementFromDOM.style.webkitLineClamp = allowedSummaryLines.toString();
+                            summaryElementFromDOM.style.display = '-webkit-box';
+                            summaryElementFromDOM.style.webkitBoxOrient = 'vertical';
+                            summaryElementFromDOM.style.overflow = 'hidden';
+                            checkAndShowToggleBtn(summaryElementFromDOM, toggleSummaryBtnFromDOM, allowedSummaryLines);
+                        }
+                    });
+                });
+                totalPages = data.totalPages;
+            } else {
+                currentPage--; // 가져온 뉴스가 없으면 페이지 번호 원복
+            }
+            updateLoadMoreButtonVisibility();
+
+        } catch (error) {
+            console.error('추가 뉴스 로드 중 오류:', error);
+            currentPage--;
+            if (loadMoreBtn) loadMoreBtn.style.display = 'none'; // 오류 시 더보기 버튼 숨김
+        } finally {
+            isLoading = false;
+            if (loadMoreBtn) loadMoreBtn.textContent = '더 보기';
+        }
     }
 
+    /**
+     * 키워드 클릭 시 해당 키워드로 뉴스를 필터링합니다.
+     * @param {string} keyword - 클릭된 키워드
+     */
     function handleKeywordClick(keyword) {
         if (!searchInput) return;
         console.log(`키워드 "${keyword}" 클릭됨!`);
         searchInput.value = keyword;
-        filterNewsByKeyword(keyword);
+        loadInitialNews(keyword); // 해당 키워드로 검색
     }
 
-    function filterNewsByKeyword(searchTerm) {
-        const lowerCaseSearchTerm = searchTerm.toLowerCase().trim();
-        if (!lowerCaseSearchTerm) {
-            loadInitialNews();
-            return;
-        }
-        const baseDataToFilter = getPersonalizedNewsData(); // 개인화된 데이터 또는 전체 데이터를 기준으로 필터링 시작
-        const filteredData = baseDataToFilter.filter(item =>
-            item.title.toLowerCase().includes(lowerCaseSearchTerm) ||
-            item.summary.toLowerCase().includes(lowerCaseSearchTerm) ||
-            item.keywords.some(k => k.toLowerCase().includes(lowerCaseSearchTerm))
-        );
-        activeDataSource = filteredData;
-        itemsToShow = 9;
-        currentNews = activeDataSource.slice(0, itemsToShow);
-        displayNews(currentNews);
-        updateLoadMoreButtonVisibility();
-    }
-
-    function displayPopularTopics() {
-        const popularTopicsList = document.getElementById('topic-list');
-        const popularTopicsSection = document.querySelector('.popular-topics');
-
-        if (!popularTopicsList || !popularTopicsSection) {
-            console.warn("Popular topics list or section not found.");
-            return;
-        }
-
-        const keywordCounts = {};
-        mockNewsData.forEach(news => {
-            news.keywords.forEach(keyword => {
-                const lowerKeyword = keyword.toLowerCase();
-                keywordCounts[lowerKeyword] = (keywordCounts[lowerKeyword] || 0) + 1;
-            });
-        });
-
-        const sortedKeywords = Object.entries(keywordCounts)
-            .sort(([, countA], [, countB]) => countB - countA)
-            .slice(0, 7)
-            .map(([keyword]) => keyword);
-
-        if (sortedKeywords.length === 0) {
-            popularTopicsSection.style.display = 'none';
-            return;
-        }
-
-        popularTopicsList.innerHTML = '';
-
-        sortedKeywords.forEach(keyword => {
-            const listItem = document.createElement('li');
-            const link = document.createElement('a');
-            link.href = "#";
-            link.textContent = `#${keyword.charAt(0).toUpperCase() + keyword.slice(1)}`;
-            link.dataset.keyword = keyword;
-
-            link.addEventListener('click', (event) => {
-                event.preventDefault();
-                const clickedKeyword = event.target.dataset.keyword;
-                if (clickedKeyword) {
-                    handleKeywordClick(clickedKeyword);
-                }
-            });
-
-            listItem.appendChild(link);
-            popularTopicsList.appendChild(listItem);
-        });
-        popularTopicsSection.style.display = 'block';
-    }
-
+    /**
+     * 모달 창을 열어 뉴스 원문을 표시합니다.
+     * @param {string} url - 뉴스 원문 URL
+     */
     function openModalWithArticle(url) {
         if (!modal || !modalIframe) return;
-        if (!url || url === "#" || url.endsWith('placeholder.html')) {
+        if (!url || url === "#") {
             console.error("유효한 기사 URL이 없습니다.");
-            alert("기사 원문 주소를 찾을 수 없습니다. (테스트용 링크일 수 있습니다)");
+            alert("기사 원문 주소를 찾을 수 없습니다.");
             return;
         }
         modalIframe.src = url;
@@ -268,6 +382,9 @@ function renderNewsItem(item) {
         document.body.style.overflow = 'hidden';
     }
 
+    /**
+     * 모달 창을 닫습니다.
+     */
     function closeModal() {
         if (!modal || !modalIframe) return;
         modal.style.display = "none";
@@ -275,12 +392,16 @@ function renderNewsItem(item) {
         document.body.style.overflow = 'auto';
     }
 
-    loadInitialNews();
-
+    // --- 초기 실행 ---
     if (searchInput) {
         searchInput.addEventListener('keyup', (event) => {
             if (event.key === 'Enter') {
-                filterNewsByKeyword(event.target.value);
+                loadInitialNews(event.target.value.trim());
+            }
+        });
+        searchInput.addEventListener('input', (event) => {
+            if (event.target.value.trim() === '' && currentSearchTerm !== '') {
+                loadInitialNews(); // 검색어 없으면 전체 목록
             }
         });
     }
@@ -304,4 +425,9 @@ function renderNewsItem(item) {
             closeModal();
         }
     });
+
+    if (typeof updateHeaderUI === 'function') {
+        updateHeaderUI();
+    }
+    loadInitialNews(); // 페이지 로드 시 초기 뉴스 목록 가져오기
 });
