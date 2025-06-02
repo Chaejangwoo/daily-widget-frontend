@@ -27,23 +27,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveKeywordsBtn = document.getElementById('save-keywords-btn');
     const messageArea = document.getElementById('message-area');
     // 헤더의 user-greeting 및 logout-btn은 auth.js의 updateHeaderUI에서 이미 처리됨
-
+    const API_BASE_URL = 'http://localhost:5001'; // 백엔드 서버 주소
     // --- 상태 변수 ---
     let selectedKeywords = []; // 현재 사용자가 선택한 키워드 배열
     const MAX_KEYWORDS = 5;    // 최대 선택 가능 키워드 수
     const predefinedKeywords = ["AI", "기술", "건강", "경제", "우주", "환경", "문화", "교육", "스포츠", "여행", "패션", "음식"]; // 추천 키워드 목록 확장
 
     // --- 초기화 함수 ---
-    function initializePage() {
-        // 로그인 상태 확인 및 사용자 정보 표시는 auth.js의 updateHeaderUI 및 enforceLogin에서 이미 처리됨.
-        // 여기서는 이 페이지에 특화된 초기화만 수행합니다.
+    async function initializePage() { // 비동기 함수로 변경
         console.log("my_keywords.js: initializePage 호출됨");
-
-        // 1. 추천 키워드 버튼 생성
         renderPredefinedKeywords();
-
-        // 2. 기존에 저장된 사용자 관심사 불러오기
-        loadUserInterests();
+        await loadUserInterests(); // 사용자 관심사 로드를 기다림
     }
 
     // 추천 키워드 버튼 렌더링 함수
@@ -140,61 +134,48 @@ document.addEventListener('DOMContentLoaded', () => {
         showMessage(`'${keywordToRemove}' 키워드가 삭제되었습니다.`, 'success');
     }
 
+    // 사용자 관심사 불러오기 함수 (API 호출로 변경)
     async function loadUserInterests() {
         const token = localStorage.getItem('authToken');
-        // 토큰 유무는 enforceLogin에서 이미 확인했으므로 여기서는 로드 로직에 집중.
-        // 하지만, 만약을 위해 여기서도 한번 더 체크하거나, 토큰이 필요한 API 호출 전에는 항상 확인.
-
-        // 임시 로직: localStorage에서 관심사 불러오기
-        const storedInterests = JSON.parse(localStorage.getItem('userInterests'));
-        if (storedInterests && Array.isArray(storedInterests)) {
-            selectedKeywords = [...storedInterests];
-        } else {
-            selectedKeywords = [];
-        }
-        renderSelectedKeywords();
-        updatePredefinedKeywordButtonsStatus();
-        console.log("my_keywords.js: 사용자 관심사 로드됨 (localStorage)", selectedKeywords);
-
-
-        // 실제 API 호출 예시 (주석 처리) - 나중에 백엔드 연동 시 활성화
-        /*
+        console.log("loadUserInterests: authToken 값:", token); // 토큰 값 확인 로그
         if (!token) {
             console.log("관심사 로드: 토큰 없음 (API 호출 불가)");
+            // 로그인 페이지로 리디렉션은 enforceLogin에서 이미 처리했을 것임
+            selectedKeywords = []; // 기본값
+            renderSelectedKeywords();
+            updatePredefinedKeywordButtonsStatus();
             return;
         }
+        console.log("loadUserInterests: fetch API 호출 시도 중..."); // fetch 호출 직전 로그
         try {
-            const response = await fetch('/api/users/me/interests', { // 또는 /api/users/me
-                method: 'GET', // API 명세에 따라
+            const response = await fetch(`${API_BASE_URL}/api/users/me/interests`, {
+                method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.user && data.user.interests) { // API 응답 구조에 따라
-                    selectedKeywords = [...data.user.interests];
-                } else if (data.success && data.interests) { // 또는 data.interests 바로 오는 경우
-                    selectedKeywords = [...data.interests];
-                }
-                 else {
-                    selectedKeywords = [];
-                    console.log("API 응답에서 관심사 정보를 찾을 수 없습니다.");
-                }
+
+            const data = await response.json();
+
+            if (response.ok && data.success && Array.isArray(data.interests)) {
+                selectedKeywords = [...data.interests];
+                console.log("사용자 관심사 로드 성공 (API):", selectedKeywords);
             } else {
-                console.error('사용자 관심사 로드 실패 (API):', response.statusText);
-                selectedKeywords = []; // 실패 시 빈 배열로
+                console.error('사용자 관심사 로드 실패 (API 응답 오류):', data.message || response.statusText);
+                selectedKeywords = []; // 실패 시 빈 배열로 또는 이전 상태 유지 결정
+                // 사용자에게 오류 메시지를 보여줄 수도 있음
+                // showMessage(data.message || '관심사를 불러오는데 실패했습니다.', 'error');
             }
         } catch (error) {
-            console.error('사용자 관심사 로드 중 오류 (API):', error);
-            selectedKeywords = [];
+            console.error('사용자 관심사 로드 중 네트워크 오류:', error);
+            selectedKeywords = []; // 오류 발생 시 빈 배열
+            showMessage('관심사를 불러오는 중 오류가 발생했습니다. 네트워크를 확인해주세요.', 'error');
         } finally {
             renderSelectedKeywords();
             updatePredefinedKeywordButtonsStatus();
         }
-        */
     }
-
+    // 관심 키워드 저장 함수 (API 호출로 변경)
     async function saveUserInterests() {
         const token = localStorage.getItem('authToken');
         if (!token) {
@@ -202,41 +183,38 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (selectedKeywords.length === 0) {
-            // 사용자가 모든 키워드를 제거하고 저장하는 경우도 있을 수 있으므로,
-            // 이 부분은 정책에 따라 메시지를 보여주거나, 빈 배열을 저장하도록 허용할 수 있음.
-            // showMessage('선택된 키워드가 없습니다. 최소 하나 이상의 키워드를 선택해주세요.', 'error');
-            // return;
-            console.log("저장할 키워드가 없습니다. 빈 배열로 저장 시도합니다.");
-        }
+        // 사용자가 모든 키워드를 제거하고 저장하는 것도 유효한 동작으로 간주 (빈 배열 저장)
+        // if (selectedKeywords.length === 0) {
+        //     showMessage('선택된 키워드가 없습니다. 최소 하나 이상의 키워드를 선택해주세요.', 'error');
+        //     return;
+        // }
 
-        // 임시 로직: localStorage에 관심사 저장
-        localStorage.setItem('userInterests', JSON.stringify(selectedKeywords));
-        console.log('관심 키워드 저장 (localStorage):', selectedKeywords);
-        showMessage('관심 키워드가 (임시로) 저장되었습니다!', 'success');
-        
-        // 실제 API 호출 예시 (주석 처리) - 나중에 백엔드 연동 시 활성화
-        /*
+        console.log('관심 키워드 저장 시도 (API):', selectedKeywords);
+        showMessage('저장 중...', 'info'); // 로딩 중 메시지 (선택 사항)
+
         try {
-            const response = await fetch('/api/users/me/interests', {
-                method: 'PUT', // 또는 POST
+            const response = await fetch(`${API_BASE_URL}/api/users/me/interests`, {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ interests: selectedKeywords })
             });
+
             const data = await response.json();
+
             if (response.ok && data.success) {
                 showMessage(data.message || '관심 키워드가 성공적으로 저장되었습니다.', 'success');
+                // 성공 시 localStorage의 임시 userInterests는 제거해도 됨 (선택)
+                // localStorage.removeItem('userInterests');
             } else {
-                showMessage(data.message || '관심 키워드 저장에 실패했습니다.', 'error');
+                showMessage(data.message || `관심 키워드 저장에 실패했습니다. (상태: ${response.status})`, 'error');
             }
         } catch (error) {
-            console.error('관심 키워드 저장 중 오류 (API):', error);
-            showMessage('관심 키워드 저장 중 오류가 발생했습니다.', 'error');
+            console.error('관심 키워드 저장 중 네트워크 오류:', error);
+            showMessage('관심 키워드 저장 중 오류가 발생했습니다. 네트워크를 확인해주세요.', 'error');
         }
-        */
     }
 
     function showMessage(message, type) {

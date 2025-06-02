@@ -1,0 +1,12 @@
+// .sequelizerc
+require('dotenv').config(); // 파일 가장 위에서 .env 파일을 로드합니다.
+
+const path = require('path');
+
+module.exports = {
+  'config': path.resolve('config', 'config.json'),
+  'models-path': path.resolve('models'),
+  'seeders-path': path.resolve('seeders'),
+  'migrations-path': path.resolve('migrations')
+  // 'require' 옵션은 여기서는 사용하지 않습니다. 위에서 직접 로드합니다.
+};
