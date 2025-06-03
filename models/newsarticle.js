@@ -4,10 +4,6 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class NewsArticle extends Model {
     static associate(models) {
-      // define association here
-      // 예: 만약 Summary, Keyword 모델이 있다면
-      // this.hasOne(models.Summary, { foreignKey: 'articleId', as: 'summary' });
-      // this.hasMany(models.Keyword, { foreignKey: 'articleId', as: 'keywords' });
     }
   }
   NewsArticle.init({
@@ -52,7 +48,13 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: false,
     },
-    // imageUrl: DataTypes.STRING, // 필요하다면 이미지 URL 필드 추가
+    imageUrl: { // <<--- 새로운 필드 추가
+      type: DataTypes.STRING, // URL은 문자열
+      allowNull: true,        // 이미지가 없을 수도 있으므로 null 허용
+      validate: {
+        isUrl: true,          // 유효한 URL 형식인지 검사 (선택 사항)
+      }
+    }
   }, {
     sequelize,
     modelName: 'NewsArticle',

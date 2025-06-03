@@ -76,55 +76,99 @@ async function fetchNewsFromRss(rssFeedUrl) {
  * @param {string} defaultSourceName - RSS 피드 출처명 (예: "연합뉴스")
  * @returns {Array} NewsArticle 모델에 저장할 수 있는 형식의 객체 배열
  */
+// services/newsFetcherService.js - parseRssItems 함수 수정
+
 function parseRssItems(rssItems, defaultSourceName = 'Unknown RSS Source') {
-    return rssItems.map(item => {
-        // title, description에 HTML 태그나 CDATA 섹션이 있을 수 있음.
-        // CDATA는 xml2js가 자동으로 처리해줄 수 있지만, HTML 태그는 제거 필요.
+    return rssItems.map((item, index) => {
         const title = item.title ? String(item.title).replace(/<[^>]*>?/gm, '').trim() : '제목 없음';
         const description = item.description ? String(item.description).replace(/<[^>]*>?/gm, '').trim() : '';
-
         let originalUrl = item.link;
-        // '연합뉴스' 등 일부 RSS는 link가 guid._ 에 실제 URL이 있는 경우도 있음
         if (item.guid && item.guid._ && typeof item.guid._ === 'string' && item.guid._.startsWith('http')) {
             originalUrl = item.guid._;
         } else if (typeof item.link === 'object' && item.link !== null && item.link.href) {
             originalUrl = item.link.href;
         } else if (Array.isArray(item.link) && item.link.length > 0 && item.link[0].href) {
             originalUrl = item.link[0].href;
-        } else if (typeof item.link === 'object' && item.link !== null && item.link['#']) { // 일부 xml2js 파싱 결과
+        } else if (typeof item.link === 'object' && item.link !== null && item.link['#']) {
              originalUrl = item.link['#'];
         }
-
 
         let publishedDate = null;
         const dateSource = item.pubDate || item.published || item.updated || (item['dc:date'] && item['dc:date']._) || item['dc:date'];
         if (dateSource) {
             try {
                 publishedDate = new Date(dateSource);
-                if (isNaN(publishedDate.getTime())) { // 유효하지 않은 날짜 객체인지 확인
-                    console.warn(`날짜 파싱 실패 (Invalid Date) for "${title}":`, dateSource);
-                    publishedDate = new Date(); // 파싱 실패 시 현재 시간
+                if (isNaN(publishedDate.getTime())) {
+                    console.warn(`날짜 파싱 실패 (Invalid Date) for "${title.substring(0,30)}...":`, dateSource);
+                    publishedDate = new Date();
                 }
             } catch (e) {
-                console.warn(`날짜 파싱 중 예외 발생 for "${title}":`, dateSource, e.message);
-                publishedDate = new Date(); // 파싱 실패 시 현재 시간
+                console.warn(`날짜 파싱 중 예외 발생 for "${title.substring(0,30)}...":`, dateSource, e.message);
+                publishedDate = new Date();
             }
         } else {
-            publishedDate = new Date(); // 날짜 정보 없으면 현재 시간
+            publishedDate = new Date();
         }
 
-        // 출처명은 dc:creator, author 등을 확인하거나, feed 자체의 title 등을 활용
         const sourceName = (item['dc:creator'] && item['dc:creator']._) || item['dc:creator'] ||
                            (item.author && item.author.name) || item.author ||
                            defaultSourceName;
 
+        // --- 이미지 URL 추출 로직 수정 ---
+        let imageUrl = null;
+        console.log(`\n--- Parsing item for image: ${title.substring(0,30)}... ---`);
+        // 로그를 위해 item 전체를 보려면 이전처럼 if (index < N) 조건 사용
+        // if (index < 1) {
+        //     console.log(`Raw item object (index: ${index}):`, JSON.stringify(item, null, 2));
+        // }
+
+        // 1. media:content 처리 (단일 객체 또는 배열)
+        if (item['media:content']) {
+            const mediaContent = item['media:content'];
+            if (Array.isArray(mediaContent)) { // 배열인 경우
+                const imageMedia = mediaContent.find(mc => mc.$ && mc.$.url && mc.$.type && mc.$.type.startsWith('image/'));
+                if (imageMedia) {
+                    imageUrl = imageMedia.$.url;
+                    console.log('Found image in <media:content (array)>: ', imageUrl);
+                }
+            } else if (typeof mediaContent === 'object' && mediaContent.$ && mediaContent.$.url && mediaContent.$.type && mediaContent.$.type.startsWith('image/')) { // 단일 객체인 경우
+                imageUrl = mediaContent.$.url;
+                console.log('Found image in <media:content (object)>: ', imageUrl);
+            }
+        }
+        // 2. <enclosure> 태그 (media:content가 없을 경우 시도)
+        else if (item.enclosure && item.enclosure.$ && item.enclosure.$.url && item.enclosure.$.type && item.enclosure.$.type.startsWith('image/')) {
+            imageUrl = item.enclosure.$.url; // xml2js 파서 옵션에 따라 $가 없을 수도 있음, 그럴 경우 item.enclosure.url
+            console.log('Found image in <enclosure>: ', imageUrl);
+        }
+        // 3. <media:thumbnail> (위에서 못 찾았을 경우)
+        else if (item['media:thumbnail'] && item['media:thumbnail'].$ && item['media:thumbnail'].$.url) {
+            imageUrl = item['media:thumbnail'].$.url; // 여기도 $ 유무 확인
+            console.log('Found image in <media:thumbnail>: ', imageUrl);
+        }
+        // 4. 기타 다른 가능한 태그들 (필요시 추가)
+
+        if (!imageUrl && description) { // 정말 이미지를 못 찾았고, description에 img 태그가 있다면 시도 (최후의 수단)
+            const imgTagMatch = description.match(/<img[^>]+src="([^">]+)"/i);
+            if (imgTagMatch && imgTagMatch[1]) {
+                imageUrl = imgTagMatch[1];
+                console.log('Found image in description <img> tag (fallback): ', imageUrl);
+            }
+        }
+
+        if (!imageUrl) {
+            console.log('Image URL not found for this item.');
+        }
+        // --- 이미지 URL 추출 로직 끝 ---
+
         return {
             title: title,
-            content: description, // RSS는 요약 정보를 content로 사용
+            content: description,
             publishedDate: publishedDate,
-            sourceName: String(sourceName).trim(), // 출처명도 문자열로 변환 및 trim
-            sourceUrl: null, // RSS 피드 제공처의 루트 URL (필요시 수동 설정)
-            originalUrl: String(originalUrl).trim(), // URL도 문자열로 변환 및 trim
+            sourceName: String(sourceName).trim(),
+            sourceUrl: null,
+            originalUrl: String(originalUrl).trim(),
+            imageUrl: imageUrl ? String(imageUrl).trim() : null,
         };
     }).filter(article => article.originalUrl && article.title && article.title !== '제목 없음');
 }
