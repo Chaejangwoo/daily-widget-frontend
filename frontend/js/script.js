@@ -121,53 +121,60 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {number} numLinesAllowedByCss - CSS 또는 JS에 의해 이 요약문에 허용된 줄 수
      */
     function checkAndShowToggleBtn(summaryElement, toggleButton, numLinesAllowedByCss) {
-        if (!summaryElement || !toggleButton) {
-            console.warn('checkAndShowToggleBtn: summaryElement 또는 toggleButton이 없습니다.');
-            return;
+    if (!summaryElement || !toggleButton) {
+        console.warn('checkAndShowToggleBtn: summaryElement 또는 toggleButton이 없습니다.');
+        if (toggleButton) toggleButton.style.display = 'none'; // 버튼 숨김 처리
+        return;
+    }
+
+    // requestAnimationFrame을 사용하여 다음 프레임에서 작업 (스타일 계산 안정화)
+    requestAnimationFrame(() => {
+        // 1. 요약문 요소를 복제합니다.
+        const clonedSummary = summaryElement.cloneNode(true); // true: 자식 노드까지 복제
+
+        // 2. 복제된 요소를 화면에 보이지 않지만, 실제 크기를 가질 수 있도록 스타일 설정
+        clonedSummary.style.position = 'absolute';   // 레이아웃에 영향 주지 않도록
+        clonedSummary.style.visibility = 'hidden';   // 화면에 보이지 않도록
+        clonedSummary.style.webkitLineClamp = 'unset';// line-clamp 해제
+        clonedSummary.style.display = 'block';       // 모든 내용 표시
+        clonedSummary.style.overflow = 'visible';    // 모든 내용 표시
+        clonedSummary.style.height = 'auto';         // 높이 자동
+        clonedSummary.style.width = summaryElement.offsetWidth + 'px'; // 원본과 동일한 너비로 설정 (중요)
+
+        // 복제된 요소를 body에 임시로 추가하여 scrollHeight를 정확히 측정
+        document.body.appendChild(clonedSummary);
+        const actualFullHeight = clonedSummary.scrollHeight; // 실제 내용 전체의 높이
+
+        // 복제된 요소 제거
+        document.body.removeChild(clonedSummary);
+
+        // 3. 원래 요약문 요소가 표시될 때의 예상 높이 계산
+        const computedStyle = window.getComputedStyle(summaryElement);
+        let lineHeight = parseFloat(computedStyle.lineHeight);
+        if (isNaN(lineHeight) || computedStyle.lineHeight === 'normal') {
+            lineHeight = parseFloat(computedStyle.fontSize) * 1.4; // 일반적인 line-height 비율
         }
+        const expectedVisibleHeight = lineHeight * numLinesAllowedByCss;
+        const tolerance = 2; // 2px 정도의 오차 허용
 
-        const originalStyles = {
-            webkitLineClamp: summaryElement.style.webkitLineClamp,
-            display: summaryElement.style.display,
-            overflow: summaryElement.style.overflow,
-        };
+        // --- 디버깅 로그 ---
+        console.groupCollapsed(`Check toggle for: ${summaryElement.textContent.substring(0, 20)}...`);
+        console.log('numLinesAllowedByCss:', numLinesAllowedByCss);
+        console.log('actualFullHeight (from cloned element):', actualFullHeight);
+        console.log('lineHeight (calculated):', lineHeight);
+        console.log('expectedVisibleHeight (for ' + numLinesAllowedByCss + ' lines):', expectedVisibleHeight);
+        const condition = actualFullHeight > expectedVisibleHeight + tolerance;
+        console.log('Condition (actualFullHeight > expectedVisibleHeight + tolerance):', condition);
+        console.groupEnd();
+        // --- 디버깅 로그 끝 ---
 
-        summaryElement.style.webkitLineClamp = 'unset';
-        summaryElement.style.display = 'block';
-        summaryElement.style.overflow = 'visible';
-
-        requestAnimationFrame(() => {
-            setTimeout(() => { // <<--- setTimeout 추가
-                const scrollHeight = summaryElement.scrollHeight;
-
-                summaryElement.style.webkitLineClamp = originalStyles.webkitLineClamp || numLinesAllowedByCss.toString();
-                summaryElement.style.display = originalStyles.display || '-webkit-box';
-                summaryElement.style.overflow = originalStyles.overflow || 'hidden';
-
-                const computedStyle = window.getComputedStyle(summaryElement);
-                let lineHeight = parseFloat(computedStyle.lineHeight);
-                if (isNaN(lineHeight) || computedStyle.lineHeight === 'normal') {
-                    lineHeight = parseFloat(computedStyle.fontSize) * 1.4;
-                }
-                const expectedVisibleHeight = lineHeight * numLinesAllowedByCss;
-                const tolerance = 2;
-
-                console.groupCollapsed(`Check toggle for: ${summaryElement.textContent.substring(0, 20)}...`);
-                console.log('numLinesAllowedByCss:', numLinesAllowedByCss);
-                console.log('scrollHeight (unclamped, after setTimeout):', scrollHeight);
-                console.log('lineHeight (calculated):', lineHeight);
-                console.log('expectedVisibleHeight (for clamped lines):', expectedVisibleHeight);
-                const condition = scrollHeight > expectedVisibleHeight + tolerance;
-                console.log('Condition (scrollHeight > expectedVisibleHeight + tolerance):', condition);
-                console.groupEnd();
-
-                if (condition) {
-                    toggleButton.style.display = 'inline';
-                } else {
-                    toggleButton.style.display = 'none';
-                }
-            }, 0); // 0ms 지연으로 다음 이벤트 루프 틱에서 실행
-        });
+        // 4. 비교 후 버튼 표시 여부 결정
+        if (condition) {
+            toggleButton.style.display = 'inline';
+        } else {
+            toggleButton.style.display = 'none';
+        }
+    });
     }
 
     function displayNews(newsArray) {

@@ -1,11 +1,84 @@
 // services/newsFetcherService.js
 const axios = require('axios');
-const xml2js = require('xml2js'); // npm install xml2js (아직 안 했다면)
+const xml2js = require('xml2js');
+const cheerio = require('cheerio'); // HTML 파싱을 위해
 const { NewsArticle } = require('../models'); // Sequelize 모델
-require('dotenv').config(); // .env 파일 사용 (만약 API 키 등 다른 환경변수 사용 시)
+require('dotenv').config(); // .env 파일 사용
 
-// XML 파서 인스턴스 생성 (옵션: explicitArray: false 로 하면 단일 항목도 배열이 아닌 객체로 바로 접근)
+// XML 파서 인스턴스 생성
 const parser = new xml2js.Parser({ explicitArray: false, trim: true });
+
+// (선택 사항) NewsAPI.org 관련 변수 (만약 NewsAPI 기능도 남겨둘 경우)
+// const NEWS_API_KEY = process.env.NEWS_API_KEY;
+// const NEWS_API_BASE_URL = 'https://newsapi.org/v2';
+
+
+/**
+ * 특정 URL의 웹페이지에서 기사 본문을 스크래핑합니다. (연합뉴스 기준 예시)
+ * @param {string} url - 스크래핑할 기사 원문 URL
+ * @returns {Promise<string>} 추출된 기사 본문 텍스트 또는 빈 문자열
+ */
+async function scrapeArticleContent(url) {
+    if (!url || !url.startsWith('http')) {
+        console.warn(`[Scraper] Invalid URL for scraping: ${url}`);
+        return '';
+    }
+    try {
+        console.log(`[Scraper] Attempting to scrape content from: ${url}`);
+        const { data: html } = await axios.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7'
+            },
+            timeout: 10000 // 10초 타임아웃
+        });
+        const $ = cheerio.load(html);
+
+        let articleText = '';
+        // !!! 연합뉴스 웹사이트의 실제 기사 본문 컨테이너 선택자로 변경해야 합니다 !!!
+        const mainContentSelector = 'article#articleWrap div.story-news.article'; // 스크린샷 기반 유력 선택자
+
+        const $mainContent = $(mainContentSelector);
+
+        if ($mainContent.length > 0) {
+            console.log(`[Scraper] Found content with selector: "${mainContentSelector}"`);
+
+            // 불필요한 요소들 제거 (광고, 스크립트, 스타일, 기자 정보, 관련기사, 댓글 등)
+            // 실제 연합뉴스 페이지 HTML 구조를 보면서 제거할 선택자를 추가/수정해야 합니다.
+            $mainContent.find('script, style, iframe, .ad-template, .social-share-btn-wrap, .promotion_area, .link_news, .copyright, figure. όπου, div.journalist-profile, div.reporter_area, .tag_area, aside, .article_bottom_ad, #articleFSSetting, .layer_reporter_area, .ico_photoviewer').remove();
+
+            // 각 문단(p 태그)의 텍스트를 가져와서 합치기
+            $mainContent.find('p').each((i, elem) => {
+                const paragraphText = $(elem).text().trim();
+                if (paragraphText) {
+                    articleText += paragraphText + '\n\n';
+                }
+            });
+            articleText = articleText.trim();
+
+            if (!articleText || articleText.length < 100) {
+                console.warn(`[Scraper] Paragraph extraction result is too short from "${mainContentSelector}". Trying to get all text from the selector after cleanup.`);
+                // 불필요한 요소 제거 후 남은 전체 텍스트 (p태그로 못가져올때 대비)
+                $mainContent.find('script, style, iframe, .ad-template, .social-share-btn-wrap, .promotion_area, .link_news, .copyright, figure. όπου, div.journalist-profile, div.reporter_area, .tag_area, aside, .article_bottom_ad, #articleFSSetting, .layer_reporter_area, .ico_photoviewer').remove();
+                articleText = $mainContent.text().replace(/\s\s+/g, ' ').trim();
+            }
+
+        } else {
+            console.warn(`[Scraper] Content not found with selector: "${mainContentSelector}" for URL: ${url}. Trying body text as fallback (less accurate).`);
+            $('body script, body style, body iframe, body header, body footer, body nav, body aside').remove();
+            articleText = $('body').text().replace(/\s\s+/g, ' ').trim();
+        }
+
+        const cleanedContent = articleText.replace(/\s\s+/g, ' ').trim();
+        console.log(`[Scraper] Scraped content length: ${cleanedContent.length} for ${url.substring(0, 70)}...`);
+        return cleanedContent.substring(0, 15000); // DB 저장 및 처리 시간 고려하여 길이 제한
+
+    } catch (error) {
+        console.error(`[Scraper] Error scraping ${url}:`, error.response ? error.response.status : error.message);
+        return '';
+    }
+}
+
 
 /**
  * 특정 URL의 RSS 피드에서 뉴스 아이템들을 가져옵니다.
@@ -20,78 +93,65 @@ async function fetchNewsFromRss(rssFeedUrl) {
     console.log(`[RSSFetcher] RSS 피드 요청: ${rssFeedUrl}`);
     try {
         const response = await axios.get(rssFeedUrl, {
-            headers: { // 일부 RSS 서버는 특정 User-Agent를 요구할 수 있습니다.
+            headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            },
-            // 일부 RSS 서버는 XML 인코딩 문제로 인해 responseType을 arraybuffer로 설정 후 인코딩 변환 필요할 수 있음
-            // responseType: 'arraybuffer',
+            }
         });
-        let xmlData = response.data;
-
-        // 만약 responseType: 'arraybuffer' 사용 시 인코딩 변환 (예: EUC-KR -> UTF-8)
-        // const iconv = require('iconv-lite'); // npm install iconv-lite
-        // xmlData = iconv.decode(Buffer.from(xmlData), 'euc-kr'); // 예시: EUC-KR 인 경우
-
+        const xmlData = response.data;
         const result = await parser.parseStringPromise(xmlData);
-        // console.log('[RSSFetcher] RSS 파싱 결과 (일부):', JSON.stringify(result, null, 2).substring(0, 800) + '...');
 
-
-        // RSS 피드 구조 확인 (가장 일반적인 RSS 2.0 구조)
         if (result.rss && result.rss.channel && result.rss.channel.item) {
-            // item이 단일 객체일 수도, 배열일 수도 있으므로 항상 배열로 처리
             const items = Array.isArray(result.rss.channel.item) ? result.rss.channel.item : [result.rss.channel.item];
             console.log(`[RSSFetcher] ${items.length}개의 RSS 아이템 수신됨.`);
             return items;
-        }
-        // Atom 피드 구조도 고려 (필요하다면)
-        else if (result.feed && result.feed.entry) {
-             const entries = Array.isArray(result.feed.entry) ? result.feed.entry : [result.feed.entry];
-             console.log(`[RSSFetcher] ${entries.length}개의 Atom 피드 엔트리 수신됨.`);
-             // Atom 피드 형식을 RSS item과 유사하게 변환
-             return entries.map(entry => ({
-                 title: entry.title && entry.title._ ? entry.title._ : entry.title,
-                 link: entry.link && entry.link.href ? entry.link.href : (Array.isArray(entry.link) ? entry.link[0].href : null),
-                 pubDate: entry.updated || entry.published,
-                 description: entry.summary && entry.summary._ ? entry.summary._ : (entry.content && entry.content._ ? entry.content._ : ''),
-                 creator: entry.author && entry.author.name ? entry.author.name : null
-             }));
-        }
-        else {
-            console.error('[RSSFetcher] RSS/Atom 피드에서 유효한 뉴스 아이템/엔트리를 찾을 수 없습니다. 피드 구조를 확인하세요.', result);
+        } else if (result.feed && result.feed.entry) { // Atom 피드 지원
+            const entries = Array.isArray(result.feed.entry) ? result.feed.entry : [result.feed.entry];
+            console.log(`[RSSFetcher] ${entries.length}개의 Atom 피드 엔트리 수신됨.`);
+            return entries.map(entry => ({ // Atom 형식을 RSS item과 유사하게 변환
+                title: entry.title && entry.title._ ? entry.title._ : entry.title,
+                link: entry.link && entry.link.href ? entry.link.href : (Array.isArray(entry.link) ? entry.link[0].href : null),
+                pubDate: entry.updated || entry.published,
+                description: entry.summary && entry.summary._ ? entry.summary._ : (entry.content && entry.content._ ? entry.content._ : ''),
+                creator: entry.author && entry.author.name ? entry.author.name : null
+            }));
+        } else {
+            console.error('[RSSFetcher] RSS/Atom 피드에서 유효한 뉴스 아이템/엔트리를 찾을 수 없습니다.', result);
             return [];
         }
     } catch (error) {
         console.error(`[RSSFetcher] RSS 피드 (${rssFeedUrl}) 처리 중 오류 발생:`, error.message);
-        if (error.response) {
-            console.error('[RSSFetcher] 오류 응답 상태:', error.response.status);
-            // console.error('[RSSFetcher] 오류 응답 데이터:', error.response.data); // 데이터가 클 수 있으므로 주의
-        }
+        if (error.response) console.error('[RSSFetcher] 오류 응답 상태:', error.response.status);
         return [];
     }
 }
 
 /**
- * RSS 아이템(또는 Atom 엔트리)을 NewsArticle 모델 형식으로 변환합니다.
+ * RSS 아이템을 NewsArticle 모델 형식으로 변환하고, 원문 내용을 스크래핑합니다.
  * @param {Array} rssItems - RSS 아이템 또는 변환된 Atom 엔트리 배열
- * @param {string} defaultSourceName - RSS 피드 출처명 (예: "연합뉴스")
- * @returns {Array} NewsArticle 모델에 저장할 수 있는 형식의 객체 배열
+ * @param {string} defaultSourceName - RSS 피드 출처명
+ * @returns {Promise<Array>} NewsArticle 모델에 저장할 수 있는 형식의 객체 배열
  */
-// services/newsFetcherService.js - parseRssItems 함수 수정
-
-function parseRssItems(rssItems, defaultSourceName = 'Unknown RSS Source') {
-    return rssItems.map((item, index) => {
+async function parseRssItems(rssItems, defaultSourceName = 'Unknown RSS Source') {
+    const parsedArticles = [];
+    for (const item of rssItems) {
         const title = item.title ? String(item.title).replace(/<[^>]*>?/gm, '').trim() : '제목 없음';
-        const description = item.description ? String(item.description).replace(/<[^>]*>?/gm, '').trim() : '';
         let originalUrl = item.link;
         if (item.guid && item.guid._ && typeof item.guid._ === 'string' && item.guid._.startsWith('http')) {
             originalUrl = item.guid._;
         } else if (typeof item.link === 'object' && item.link !== null && item.link.href) {
             originalUrl = item.link.href;
-        } else if (Array.isArray(item.link) && item.link.length > 0 && item.link[0].href) {
+        } else if (Array.isArray(item.link) && item.link.length > 0 && item.link[0] && item.link[0].href) { // item.link[0] 존재 여부 체크
             originalUrl = item.link[0].href;
-        } else if (typeof item.link === 'object' && item.link !== null && item.link['#']) {
-             originalUrl = item.link['#'];
+        } else if (typeof item.link === 'string' && item.link.startsWith('http')) { // link가 문자열인 경우
+             originalUrl = item.link;
         }
+
+
+        if (!originalUrl || !title || title === '제목 없음') {
+            console.warn('Skipping item due to missing or invalid originalUrl or title:', item.title || 'N/A', originalUrl || 'N/A');
+            continue;
+        }
+        originalUrl = String(originalUrl).trim(); // 여기서 trim 한번 더
 
         let publishedDate = null;
         const dateSource = item.pubDate || item.published || item.updated || (item['dc:date'] && item['dc:date']._) || item['dc:date'];
@@ -99,13 +159,9 @@ function parseRssItems(rssItems, defaultSourceName = 'Unknown RSS Source') {
             try {
                 publishedDate = new Date(dateSource);
                 if (isNaN(publishedDate.getTime())) {
-                    console.warn(`날짜 파싱 실패 (Invalid Date) for "${title.substring(0,30)}...":`, dateSource);
-                    publishedDate = new Date();
+                    publishedDate = new Date(); // 파싱 실패 시 현재 시간
                 }
-            } catch (e) {
-                console.warn(`날짜 파싱 중 예외 발생 for "${title.substring(0,30)}...":`, dateSource, e.message);
-                publishedDate = new Date();
-            }
+            } catch (e) { publishedDate = new Date(); }
         } else {
             publishedDate = new Date();
         }
@@ -114,76 +170,47 @@ function parseRssItems(rssItems, defaultSourceName = 'Unknown RSS Source') {
                            (item.author && item.author.name) || item.author ||
                            defaultSourceName;
 
-        // --- 이미지 URL 추출 로직 수정 ---
+        // --- 이미지 URL 추출 로직 (이전 답변 참고하여 연합뉴스 RSS 구조에 맞게 수정) ---
         let imageUrl = null;
-        console.log(`\n--- Parsing item for image: ${title.substring(0,30)}... ---`);
-        // 로그를 위해 item 전체를 보려면 이전처럼 if (index < N) 조건 사용
-        // if (index < 1) {
-        //     console.log(`Raw item object (index: ${index}):`, JSON.stringify(item, null, 2));
-        // }
-
-        // 1. media:content 처리 (단일 객체 또는 배열)
         if (item['media:content']) {
             const mediaContent = item['media:content'];
-            if (Array.isArray(mediaContent)) { // 배열인 경우
+            if (Array.isArray(mediaContent)) {
                 const imageMedia = mediaContent.find(mc => mc.$ && mc.$.url && mc.$.type && mc.$.type.startsWith('image/'));
-                if (imageMedia) {
-                    imageUrl = imageMedia.$.url;
-                    console.log('Found image in <media:content (array)>: ', imageUrl);
-                }
-            } else if (typeof mediaContent === 'object' && mediaContent.$ && mediaContent.$.url && mediaContent.$.type && mediaContent.$.type.startsWith('image/')) { // 단일 객체인 경우
+                if (imageMedia) imageUrl = imageMedia.$.url;
+            } else if (typeof mediaContent === 'object' && mediaContent.$ && mediaContent.$.url && mediaContent.$.type && mediaContent.$.type.startsWith('image/')) {
                 imageUrl = mediaContent.$.url;
-                console.log('Found image in <media:content (object)>: ', imageUrl);
             }
-        }
-        // 2. <enclosure> 태그 (media:content가 없을 경우 시도)
-        else if (item.enclosure && item.enclosure.$ && item.enclosure.$.url && item.enclosure.$.type && item.enclosure.$.type.startsWith('image/')) {
-            imageUrl = item.enclosure.$.url; // xml2js 파서 옵션에 따라 $가 없을 수도 있음, 그럴 경우 item.enclosure.url
-            console.log('Found image in <enclosure>: ', imageUrl);
-        }
-        // 3. <media:thumbnail> (위에서 못 찾았을 경우)
-        else if (item['media:thumbnail'] && item['media:thumbnail'].$ && item['media:thumbnail'].$.url) {
-            imageUrl = item['media:thumbnail'].$.url; // 여기도 $ 유무 확인
-            console.log('Found image in <media:thumbnail>: ', imageUrl);
-        }
-        // 4. 기타 다른 가능한 태그들 (필요시 추가)
+        } else if (item.enclosure && item.enclosure.$ && item.enclosure.$.url && item.enclosure.$.type && item.enclosure.$.type.startsWith('image/')) {
+            imageUrl = item.enclosure.$.url;
+        } // ... (기타 이미지 추출 로직) ...
 
-        if (!imageUrl && description) { // 정말 이미지를 못 찾았고, description에 img 태그가 있다면 시도 (최후의 수단)
-            const imgTagMatch = description.match(/<img[^>]+src="([^">]+)"/i);
-            if (imgTagMatch && imgTagMatch[1]) {
-                imageUrl = imgTagMatch[1];
-                console.log('Found image in description <img> tag (fallback): ', imageUrl);
-            }
-        }
 
-        if (!imageUrl) {
-            console.log('Image URL not found for this item.');
-        }
-        // --- 이미지 URL 추출 로직 끝 ---
+        // --- 원문 내용 스크래핑 호출 ---
+        const fullContent = await scrapeArticleContent(originalUrl);
+        // ---
 
-        return {
+        parsedArticles.push({
             title: title,
-            content: description,
+            content: fullContent || (item.description ? String(item.description).replace(/<[^>]*>?/gm, '').trim() : ''),
             publishedDate: publishedDate,
             sourceName: String(sourceName).trim(),
             sourceUrl: null,
-            originalUrl: String(originalUrl).trim(),
+            originalUrl: originalUrl, // 이미 trim 처리됨
             imageUrl: imageUrl ? String(imageUrl).trim() : null,
-        };
-    }).filter(article => article.originalUrl && article.title && article.title !== '제목 없음');
+        });
+    }
+    return parsedArticles;
 }
 
 /**
  * 변환된 뉴스 기사들을 데이터베이스에 저장합니다. (중복 방지)
- * @param {Array} parsedArticles - 저장할 기사 객체 배열
  */
 async function saveArticlesToDB(parsedArticles) {
     let savedCount = 0;
     let skippedCount = 0;
-
     for (const articleData of parsedArticles) {
         if (!articleData.originalUrl || typeof articleData.originalUrl !== 'string' || !articleData.originalUrl.startsWith('http')) {
-            console.warn('유효하지 않거나 누락된 originalUrl로 인해 기사를 건너뜁니다:', articleData.title, articleData.originalUrl);
+            console.warn('DB 저장 건너뜀 (유효하지 않은 originalUrl):', articleData.title, articleData.originalUrl);
             skippedCount++;
             continue;
         }
@@ -192,13 +219,11 @@ async function saveArticlesToDB(parsedArticles) {
                 where: { originalUrl: articleData.originalUrl },
                 defaults: articleData,
             });
-
             if (created) {
                 savedCount++;
-                console.log(`저장됨: ${article.title}`);
+                console.log(`저장됨: ${article.title ? article.title.substring(0,50) : '제목 없음'}...`);
             } else {
                 skippedCount++;
-                // console.log(`이미 존재함 (건너뜀): ${article.title}`);
             }
         } catch (error) {
             console.error(`DB 저장 중 오류 발생 (${articleData.title || '제목 없음'}):`, error.name, error.message);
@@ -208,11 +233,8 @@ async function saveArticlesToDB(parsedArticles) {
     return { savedCount, skippedCount };
 }
 
-
 /**
- * 지정된 RSS 피드 URL에서 뉴스를 가져와 DB에 저장하는 함수
- * @param {string} rssFeedUrl - 가져올 RSS 피드의 URL
- * @param {string} sourceName - 해당 RSS 피드의 출처명
+ * 지정된 RSS 피드 URL에서 뉴스를 가져와 스크래핑 후 DB에 저장하는 함수
  */
 async function fetchAndSaveFromRss(rssFeedUrl, sourceName = 'Unknown RSS Source') {
     if (!rssFeedUrl) {
@@ -223,7 +245,7 @@ async function fetchAndSaveFromRss(rssFeedUrl, sourceName = 'Unknown RSS Source'
     const rawRssItems = await fetchNewsFromRss(rssFeedUrl);
 
     if (rawRssItems && rawRssItems.length > 0) {
-        const parsedArticles = parseRssItems(rawRssItems, sourceName);
+        const parsedArticles = await parseRssItems(rawRssItems, sourceName); // await 추가
         if (parsedArticles.length > 0) {
             const result = await saveArticlesToDB(parsedArticles);
             return result;
@@ -238,12 +260,9 @@ async function fetchAndSaveFromRss(rssFeedUrl, sourceName = 'Unknown RSS Source'
 }
 
 module.exports = {
+    scrapeArticleContent,
     fetchNewsFromRss,
     parseRssItems,
     saveArticlesToDB,
-    fetchAndSaveFromRss, // RSS용 주 실행 함수
-    // 만약 NewsAPI.org 관련 함수도 남겨두고 싶다면 여기에 추가
-    // fetchTopHeadlines,
-    // fetchEverything,
-    // fetchAndSaveNews, // NewsAPI용 주 실행 함수 (이름 변경 또는 구분 필요)
+    fetchAndSaveFromRss,
 };
