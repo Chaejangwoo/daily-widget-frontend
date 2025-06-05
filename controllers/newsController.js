@@ -1,14 +1,16 @@
-// controllers/newsController.js
+// backend/controllers/newsController.js
 const { NewsArticle, Summary, Keyword, sequelize } = require('../models'); // Summary, Keyword, sequelize 추가
 const { Op } = require('sequelize');
 
 // 뉴스 목록 조회 컨트롤러 함수
 const getAllNews = async (req, res) => {
+    console.log('[Backend] getAllNews 호출됨. Query:', req.query); // 요청 쿼리 전체 로그
+
     try {
-        let { page, limit, sortBy, sortOrder, keyword, sourceName, category } = req.query; // category 파라미터 추가 (나중을 위해)
+        let { page, limit, sortBy, sortOrder, keyword, sourceName, category } = req.query;
 
         page = parseInt(page, 10) || 1;
-        limit = parseInt(limit, 10) || 10;
+        limit = parseInt(limit, 10) || 9; // 프론트엔드 itemsPerPage와 일치 (또는 기본값 설정)
         const offset = (page - 1) * limit;
 
         sortBy = sortBy || 'publishedDate'; // 기본 정렬: 발행일
@@ -16,93 +18,98 @@ const getAllNews = async (req, res) => {
 
         const whereClause = {};
         if (keyword) {
+            console.log('[Backend] 검색어 처리:', keyword);
             whereClause[Op.or] = [
                 { title: { [Op.like]: `%${keyword}%` } },
-                { content: { [Op.like]: `%${keyword}%` } } // AI 요약이 있다면 요약에서도 검색 가능
+                { content: { [Op.like]: `%${keyword}%` } }
+                // TODO: 필요하다면 요약(Summary) 및 추출된 키워드(Keyword)에서도 검색하도록 확장
+                // { '$aiSummary.summaryText$': { [Op.like]: `%${keyword}%` } }, // 예시: 요약 검색 (include 설정 필요)
+                // { '$aiKeywords.keywordText$': { [Op.like]: `%${keyword}%` } } // 예시: 키워드 검색 (include 설정 필요)
             ];
         }
         if (sourceName) {
+            console.log('[Backend] 출처 필터링:', sourceName);
             whereClause.sourceName = sourceName;
         }
-        // TODO: 나중에 NewsArticle 모델에 category 필드 추가 후 아래 주석 해제
-        // if (category && category.toLowerCase() !== 'all') { // 'all'은 전체를 의미
-        //     whereClause.category = category;
-        // }
+        // 카테고리 필터링 로직 수정: 빈 문자열("")은 전체를 의미하므로 필터링 안함
+        if (category && category.trim() !== '' && category.toLowerCase() !== 'all') {
+            console.log('[Backend] 카테고리 필터링:', category);
+            whereClause.category = category; 
+        } else {
+            console.log('[Backend] 카테고리 필터링 없음 (전체 또는 "all")');
+        }
+
+        console.log('[Backend] 최종 whereClause:', JSON.stringify(whereClause, null, 2));
 
         const { count, rows } = await NewsArticle.findAndCountAll({
             where: whereClause,
             limit: limit,
             offset: offset,
             order: [[sortBy, sortOrder]],
-            include: [ // --- 관계 모델 포함 시작 ---
+            include: [
                 {
                     model: Summary,
-                    as: 'aiSummary', // NewsArticle 모델에서 정의한 별칭
-                    attributes: ['summaryText'], // 필요한 필드만 선택
-                    required: false // LEFT JOIN (요약이 없어도 뉴스는 나옴)
+                    as: 'aiSummary',
+                    attributes: ['summaryText'],
+                    required: false // LEFT JOIN
                 },
                 {
                     model: Keyword,
-                    as: 'aiKeywords', // NewsArticle 모델에서 정의한 별칭
-                    attributes: ['keywordText'], // 필요한 필드만 선택
-                    required: false // LEFT JOIN (키워드가 없어도 뉴스는 나옴)
+                    as: 'aiKeywords',
+                    attributes: ['keywordText'],
+                    required: false // LEFT JOIN
                 }
-            ], // --- 관계 모델 포함 끝 ---
-            distinct: true, // include 사용 시 count가 부정확해지는 것을 방지 (상황에 따라 필요)
-                           // 특히 hasMany 관계에서 중복 count 방지
+            ],
+            distinct: true, // include 사용 시 count가 부정확해지는 것을 방지 (특히 hasMany 관계)
         });
 
-        // 프론트엔드로 보낼 데이터 형식 가공
-        const newsWithProcessedData = rows.map(articleInstance => {
-            const article = articleInstance.get({ plain: true }); // Sequelize 인스턴스를 일반 객체로 변환
+        console.log(`[Backend] DB 조회 결과: ${rows.length}개 뉴스 반환, 총 ${count}개`);
 
-            // AI 요약 처리: aiSummary 객체가 있고 summaryText가 있으면 사용, 없으면 content 앞부분 사용
-            let displaySummary = '요약 정보가 준비 중입니다.'; // 기본 메시지
+        const newsWithProcessedData = rows.map(articleInstance => {
+            const article = articleInstance.get({ plain: true });
+
+            let displaySummary = '요약 정보가 준비 중입니다.';
             if (article.aiSummary && article.aiSummary.summaryText) {
                 displaySummary = article.aiSummary.summaryText;
             } else if (article.content) {
-                // AI 요약이 없고, 원본 content가 있다면 앞 200자 + ...
-                // (주의: content가 매우 길 수 있으므로, 여기서 자르는 것은 임시방편.
-                //  AI 요약이 없는 경우를 프론트에서 어떻게 처리할지 정책 필요)
-                const snippetLength = article.title && article.title.length > 50 ? 150 : 200; // 제목 길면 요약 짧게
+                const snippetLength = article.title && article.title.length > 50 ? 150 : 200;
                 displaySummary = article.content.substring(0, snippetLength) + (article.content.length > snippetLength ? '...' : '');
             }
 
-            // 키워드 처리: aiKeywords 배열에서 keywordText만 추출
             const displayKeywords = article.aiKeywords ? article.aiKeywords.map(kw => kw.keywordText) : [];
 
             return {
                 id: article.id,
                 title: article.title,
-                // content: article.content, // 전체 본문은 목록 API에서 제외하는 것이 일반적 (필요하다면 포함)
-                summaryForDisplay: displaySummary, // 프론트에서 사용할 최종 요약
+                summaryForDisplay: displaySummary,
                 publishedDate: article.publishedDate,
                 sourceName: article.sourceName,
                 originalUrl: article.originalUrl,
                 imageUrl: article.imageUrl,
-                keywordsForDisplay: displayKeywords, // 프론트에서 사용할 키워드 배열
-                // isSummarized: article.isSummarized, // 디버깅용으로 필요하면 전달
-                // isKeywordsExtracted: article.isKeywordsExtracted, // 디버깅용
-                createdAt: article.createdAt, // 정렬 등에 활용 가능
-                updatedAt: article.updatedAt,
-                category: article.category
+                keywordsForDisplay: displayKeywords,
+                category: article.category, // 카테고리 정보 포함
+                createdAt: article.createdAt,
+                updatedAt: article.updatedAt
             };
         });
 
-        res.json({
+        res.status(200).json({
             totalPages: Math.ceil(count / limit),
             currentPage: page,
             totalNews: count,
-            news: newsWithProcessedData // 가공된 데이터 전달
+            news: newsWithProcessedData
         });
 
     } catch (error) {
-        console.error('뉴스 목록 조회 API 오류:', error);
+        console.error('[Backend] 뉴스 목록 조회 API 오류:', error);
         res.status(500).json({ message: '서버 오류로 뉴스 목록을 가져오는데 실패했습니다.', error: error.message });
     }
 };
 
+// 특정 ID 뉴스 조회 (만약 사용한다면)
+// const getNewsById = async (req, res) => { ... };
+
 module.exports = {
     getAllNews,
-    // getNewsById, // 필요하다면 다른 컨트롤러 함수도 export
+    // getNewsById,
 };
