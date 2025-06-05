@@ -3,12 +3,12 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Daily Widget 프론트엔드 스크립트(script.js) 시작!');
 
     // --- 전역 변수 및 상수 ---
-    const API_BASE_URL = 'http://localhost:5001/api'; // 백엔드 API 기본 URL
+    const API_BASE_URL = 'http://localhost:5001/api';
     const newsListContainer = document.getElementById('news-list-container');
     const loadMoreBtn = document.getElementById('load-more-btn');
     const searchInput = document.getElementById('search-keyword');
-    const newsSectionTitleEl = document.getElementById('news-section-title'); // ID로 가져오도록 수정
-    const categoryButtons = document.querySelectorAll('.category-btn'); // 카테고리 버튼들
+    const newsSectionTitleEl = document.getElementById('news-section-title');
+    const categoryButtons = document.querySelectorAll('.category-btn');
 
     // Modal 관련 요소
     const modal = document.getElementById('news-modal');
@@ -16,21 +16,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModalBtn = document.querySelector('.close-modal-btn');
 
     let currentPage = 1;
-    const itemsPerPage = 9; // 한 페이지에 보여줄 뉴스 개수
-    let isLoading = false;  // API 요청 중복 방지 플래그
-    let totalPages = 1;     // 전체 페이지 수 (API 응답으로 받음)
-    let currentSearchTerm = ''; // 현재 검색어 저장
-    let currentCategory = '';   // 현재 선택된 카테고리 저장
+    const itemsPerPage = 9;
+    let isLoading = false;
+    let totalPages = 1;
+    let currentSearchTerm = '';
+    let currentCategory = '';
 
     // --- 함수 정의 ---
 
-    /**
-     * 뉴스 아이템 HTML 요소를 생성합니다.
-     */
     function renderNewsItem(item) {
         const article = document.createElement('article');
         article.classList.add('news-item');
 
+        // --- 이미지, 카테고리 태그, 제목, 요약, 더보기 버튼, 메타 정보, 키워드 생성 로직 ---
         const imageContainer = document.createElement('div');
         imageContainer.classList.add('news-image-container');
         if (item.imageUrl) {
@@ -52,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
             placeholder.classList.add('placeholder-icon');
             placeholder.textContent = '🖼️';
             imageContainer.appendChild(placeholder);
-            imageContainer.style.backgroundColor = '#e9ecef'; // 플레이스홀더 배경색 추가
+            imageContainer.style.backgroundColor = '#e9ecef';
         }
         article.appendChild(imageContainer);
 
@@ -60,13 +58,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const categoryTag = document.createElement('span');
             categoryTag.classList.add('news-category-tag');
             categoryTag.textContent = item.category;
-            // 카테고리 태그 클릭 시 해당 카테고리로 필터링 (선택적 기능)
             categoryTag.addEventListener('click', (event) => {
                 event.stopPropagation();
-                // categoryButtons 중 해당 카테고리 값과 일치하는 버튼을 찾아 active 시키고 로드
                 categoryButtons.forEach(btn => {
                     if (btn.dataset.category === item.category) {
-                        btn.click(); // 해당 버튼 클릭 이벤트 트리거
+                        btn.click();
                     }
                 });
             });
@@ -100,8 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isCardExpanded) {
                 toggleSummaryBtn.style.display = 'inline';
             } else {
-                // 접었을 때 버튼 표시 여부는 checkAndShowToggleBtn에서 다시 결정
-                const titleEl = article.querySelector('h2'); // 올바른 titleElement 참조
+                const titleEl = article.querySelector('h2');
                 if (summaryElement && titleEl) {
                     const titleStyle = window.getComputedStyle(titleEl);
                     const titleLineHeight = parseFloat(titleStyle.lineHeight) || (parseFloat(titleStyle.fontSize) * 1.3);
@@ -137,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         article.appendChild(keywordsContainer);
 
+
         const linkElement = document.createElement('a');
         linkElement.href = item.originalUrl || "#";
         linkElement.classList.add('original-link');
@@ -145,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             event.stopPropagation();
             if (item.originalUrl && item.originalUrl !== "#") {
-                openModalWithArticle(item.originalUrl);
+                openModalWithArticle(item.originalUrl); // 모달 함수 호출로 변경
             } else {
                 alert('기사 원문 주소를 찾을 수 없습니다.');
             }
@@ -155,9 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return article;
     }
 
-    /**
-     * 요약문이 잘렸는지 확인하고 "더보기" 버튼 표시 여부를 결정합니다.
-     */
     function checkAndShowToggleBtn(summaryElement, toggleButton, numLinesAllowedByCss) {
         if (!summaryElement || !toggleButton) {
             if (toggleButton) toggleButton.style.display = 'none'; return;
@@ -183,10 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const expectedVisibleHeight = lineHeight * numLinesAllowedByCss;
             const tolerance = 2;
 
-            console.groupCollapsed(`Check toggle for: ${summaryElement.textContent.substring(0, 20)}...`);
-            // ... (로그) ...
-            console.groupEnd();
-
             if (actualFullHeight > expectedVisibleHeight + tolerance) {
                 toggleButton.style.display = 'inline';
             } else {
@@ -195,17 +184,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
-    /**
-     * 뉴스 목록을 화면에 표시합니다. (기존 목록을 대체)
-     */
     function displayNews(newsArray) {
-        //      내부에서 renderNewsItem 호출하고, 각 newsElement에 대해
-        //      requestAnimationFrame 내에서 제목 줄 수 계산 후
-        //      summaryElement에 summary-shorten 클래스 토글 및
-        //      checkAndShowToggleBtn(summaryElementFromDOM, toggleSummaryBtnFromDOM, allowedSummaryLines); 호출) ...
         if (!newsListContainer) return;
-        // newsListContainer.innerHTML = ''; // loadInitialNews에서 이미 처리
 
         if (!newsArray || newsArray.length === 0) {
             newsListContainer.innerHTML = `<p class="empty-message">${currentSearchTerm ? `"${currentSearchTerm}"에 대한 검색 결과가 없습니다.` : (currentCategory ? `[${currentCategory}] 카테고리에 뉴스가 없습니다.` : '표시할 뉴스가 없습니다.')}</p>`;
@@ -238,41 +218,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         summaryElementFromDOM.classList.remove('summary-shorten');
                     }
-                    // CSS 클래스로 line-clamp가 제어되므로 JS에서 직접 설정은 불필요
-                    console.log(`Calling checkAndShowToggleBtn for: ${item.title ? item.title.substring(0,20) : 'N/A'}... (Allowed lines: ${allowedSummaryLines})`);
                     checkAndShowToggleBtn(summaryElementFromDOM, toggleSummaryBtnFromDOM, allowedSummaryLines);
                 }
             });
         });
     }
 
-    /**
-     * "더 보기" 버튼 표시 여부를 업데이트합니다.
-     */
     function updateLoadMoreButtonVisibility() {
-        // ... (이전과 동일) ...
         if (!loadMoreBtn) return;
-        if (currentPage < totalPages && newsListContainer.children.length > 0 && newsListContainer.children[0].tagName !== 'P') { // 뉴스가 있고, 마지막 페이지가 아닐때
+        if (currentPage < totalPages && newsListContainer && newsListContainer.children.length > 0 && newsListContainer.children[0].tagName !== 'P') {
             loadMoreBtn.style.display = 'block';
         } else {
             loadMoreBtn.style.display = 'none';
         }
     }
 
-
-    /**
-     * 초기 뉴스 목록을 로드하거나 검색/필터링을 수행합니다.
-     */
     async function loadInitialNews(searchTerm = '', category = '') {
-        //      newsListContainer.innerHTML = ''; 추가,
-        //      뉴스 섹션 제목 업데이트 로직 개선) ...
         if (isLoading) return;
         isLoading = true;
         currentSearchTerm = searchTerm.trim();
         currentCategory = category.trim();
         if (loadMoreBtn) loadMoreBtn.textContent = '로딩 중...';
         currentPage = 1;
-        if (newsListContainer) newsListContainer.innerHTML = ''; // 항상 비우고 시작
+        if (newsListContainer) newsListContainer.innerHTML = '';
 
         try {
             let apiUrl = `${API_BASE_URL}/news?page=${currentPage}&limit=${itemsPerPage}&sortBy=publishedDate&sortOrder=DESC`;
@@ -283,39 +251,45 @@ document.addEventListener('DOMContentLoaded', () => {
             const userInfo = typeof getUserInfo === 'function' ? getUserInfo() : null;
 
             if (newsSectionTitleEl) {
-                let titleParts = [];
+                let titleText = '';
                 const activeCategoryBtn = document.querySelector('.category-btn.active');
-                const categoryText = activeCategoryBtn ? (activeCategoryBtn.dataset.category === '' ? '최신' : activeCategoryBtn.dataset.category) : '최신';
+                const categoryDisplayText = activeCategoryBtn ? (activeCategoryBtn.dataset.category === '' ? '최신' : activeCategoryBtn.dataset.category) : '최신';
 
                 if (currentSearchTerm) {
-                    titleParts.push(`[${categoryText}] "${currentSearchTerm}" 검색 결과`);
+                    titleText = `[${categoryDisplayText}] "${currentSearchTerm}" 검색 결과`;
                 } else if (userInfo && userInfo.username && !currentCategory && !currentSearchTerm) {
-                    titleParts.push(`${userInfo.username}님을 위한 맞춤 뉴스`);
+                    titleText = `${userInfo.username}님을 위한 맞춤 뉴스`;
                 } else {
-                    titleParts.push(`[${categoryText}] 뉴스`);
+                    titleText = `[${categoryDisplayText}] 뉴스`;
                 }
-                newsSectionTitleEl.textContent = titleParts.join(' ');
+                newsSectionTitleEl.textContent = titleText;
             }
 
             console.log('Requesting API URL (Initial):', apiUrl);
             const response = await fetch(apiUrl);
-            if (!response.ok) { /* ... (에러 처리) ... */ throw new Error('뉴스 로드 실패');}
+            if (!response.ok) {
+                console.error('뉴스 로드 실패:', response.status, await response.text());
+                if(newsListContainer) newsListContainer.innerHTML = `<p class="empty-message">뉴스를 불러오는 데 실패했습니다. (오류: ${response.status})</p>`;
+                totalPages = 0;
+                return;
+            }
             const data = await response.json();
 
             displayNews(data.news || []);
             totalPages = data.totalPages || 1;
-            updateLoadMoreButtonVisibility();
 
-        } catch (error) { /* ... */ }
-        finally { /* ... */ }
+        } catch (error) {
+            console.error('뉴스 로드 중 네트워크 또는 기타 오류:', error);
+            if(newsListContainer) newsListContainer.innerHTML = `<p class="empty-message">뉴스 로드 중 오류가 발생했습니다. (${error.message})</p>`;
+            totalPages = 0;
+        } finally {
+            isLoading = false;
+            if (loadMoreBtn) loadMoreBtn.textContent = '더 보기';
+            updateLoadMoreButtonVisibility();
+        }
     }
 
-    /**
-     * 추가 뉴스 목록을 로드합니다 ("더 보기" 기능).
-     */
     async function loadMoreNews() {
-        //      API URL에 currentCategory 포함,
-        //      뉴스 아이템 추가 후 각 아이템에 대해 requestAnimationFrame으로 checkAndShowToggleBtn 호출) ...
         if (isLoading || currentPage >= totalPages) return;
         isLoading = true;
         if (loadMoreBtn) loadMoreBtn.textContent = '로딩 중...';
@@ -327,14 +301,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             console.log('Requesting API URL (More):', apiUrl);
             const response = await fetch(apiUrl);
-            if (!response.ok) throw new Error('추가 뉴스 로드 실패');
+            if (!response.ok) {
+                console.error('추가 뉴스 로드 실패:', response.status, await response.text());
+                currentPage--;
+                return;
+            }
             const data = await response.json();
 
             if (data.news && data.news.length > 0) {
                 data.news.forEach(item => {
                     const newsElement = renderNewsItem(item);
                     if (newsListContainer) newsListContainer.appendChild(newsElement);
-                    requestAnimationFrame(() => { // 추가된 각 아이템에 대해서도 버튼 로직 실행
+                    requestAnimationFrame(() => {
                         const summaryElementFromDOM = newsElement.querySelector('.summary');
                         const toggleSummaryBtnFromDOM = newsElement.querySelector('.toggle-summary-btn');
                         const titleElementFromDOM = newsElement.querySelector('h2');
@@ -350,7 +328,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (titleLines > 2) summaryElementFromDOM.classList.add('summary-shorten');
                             else summaryElementFromDOM.classList.remove('summary-shorten');
                             
-                            console.log(`Calling checkAndShowToggleBtn for (more): ${item.title ? item.title.substring(0,20) : 'N/A'}... (Allowed lines: ${allowedSummaryLines})`);
                             checkAndShowToggleBtn(summaryElementFromDOM, toggleSummaryBtnFromDOM, allowedSummaryLines);
                         }
                     });
@@ -359,25 +336,45 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 currentPage--;
             }
+
+        } catch (error) {
+            console.error('추가 뉴스 로드 중 네트워크 또는 기타 오류:', error);
+            currentPage--;
+        } finally {
+            isLoading = false;
+            if (loadMoreBtn) loadMoreBtn.textContent = '더 보기';
             updateLoadMoreButtonVisibility();
-        } catch (error) { /* ... */ }
-        finally { /* ... */ }
+        }
     }
 
-
-    /**
-     * 키워드 클릭 시 해당 키워드로 뉴스를 필터링합니다.
-     */
     function handleKeywordClick(keyword) {
-        // ... (이전과 동일) ...
         if (!searchInput) return;
         searchInput.value = keyword;
-        loadInitialNews(keyword, currentCategory); // 현재 카테고리 유지하며 키워드 검색
+        const activeCategoryButton = document.querySelector('.category-btn.active');
+        const categoryToSearch = activeCategoryButton ? activeCategoryButton.dataset.category : '';
+        loadInitialNews(keyword, categoryToSearch);
     }
 
-    // --- 모달 관련 함수 (이전과 동일) ---
-    function openModalWithArticle(url) { /* ... */ }
-    function closeModal() { /* ... */ }
+    // --- 모달 관련 함수 ---
+    function openModalWithArticle(url) {
+        if (!modal || !modalIframe) return;
+        console.log("모달 열기 시도 URL:", url);
+        modalIframe.src = ''; // 이전 내용 초기화 (깜빡임 방지 및 이전 페이지 잔상 제거)
+        // 약간의 딜레이 후 src 설정 (브라우저 렌더링 시간 확보)
+        setTimeout(() => {
+            modalIframe.src = url;
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
+        }, 50); // 50ms 정도의 짧은 딜레이
+        // 
+    }
+
+    function closeModal() {
+        if (!modal || !modalIframe) return;
+        modal.style.display = 'none';
+        modalIframe.src = ''; // 모달 닫을 때 iframe 내용 비우기 (리소스 해제 및 다음 로딩 시 깜빡임 방지)
+        document.body.style.overflow = ''; // 배경 스크롤 복원
+    }
 
     // --- 이벤트 리스너 등록 ---
     if (categoryButtons.length > 0) {
@@ -387,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 categoryButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
                 const selectedCategory = button.dataset.category;
-                loadInitialNews(searchInput ? searchInput.value.trim() : '', selectedCategory); // 현재 검색어와 새 카테고리로 로드
+                loadInitialNews(searchInput ? searchInput.value.trim() : '', selectedCategory);
             });
         });
     }
@@ -395,30 +392,45 @@ document.addEventListener('DOMContentLoaded', () => {
     if (searchInput) {
         searchInput.addEventListener('keyup', (event) => {
             if (event.key === 'Enter') {
-                loadInitialNews(event.target.value.trim(), currentCategory); // 현재 카테고리 유지하며 검색
+                const activeCategoryButton = document.querySelector('.category-btn.active');
+                const categoryToSearch = activeCategoryButton ? activeCategoryButton.dataset.category : '';
+                loadInitialNews(event.target.value.trim(), categoryToSearch);
             }
         });
-        searchInput.addEventListener('input', (event) => { // 검색창 비우면
+        searchInput.addEventListener('input', (event) => {
             if (event.target.value.trim() === '' && currentSearchTerm !== '') {
-                loadInitialNews('', currentCategory); // 현재 카테고리는 유지
+                const activeCategoryButton = document.querySelector('.category-btn.active');
+                const categoryToSearch = activeCategoryButton ? activeCategoryButton.dataset.category : '';
+                loadInitialNews('', categoryToSearch);
             }
         });
     }
 
-    // ... (loadMoreBtn, closeModalBtn, window click/keydown 이벤트 리스너는 이전과 동일) ...
     if (loadMoreBtn) loadMoreBtn.addEventListener('click', loadMoreNews);
-    if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
-    window.addEventListener('click', (event) => { if (event.target === modal) closeModal(); });
-    window.addEventListener('keydown', (event) => { if (event.key === 'Escape' && modal && modal.style.display === 'block') closeModal(); });
 
+    // 모달 닫기 버튼 및 외부 클릭, ESC 키 이벤트 리스너 
+    if (closeModalBtn && modal) {
+        closeModalBtn.addEventListener('click', closeModal);
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && modal.style.display === 'block') {
+                closeModal();
+            }
+        });
+    }
 
     // --- 초기 실행 ---
+    // 초기 뉴스 로드 로직 
     if (typeof updateHeaderUI === 'function') {
         updateHeaderUI();
     }
-    // HTML에서 기본 active된 카테고리 버튼 값으로 초기 로드
+
     const initialActiveCategoryButton = document.querySelector('.category-btn.active');
     currentCategory = initialActiveCategoryButton ? initialActiveCategoryButton.dataset.category : '';
-    loadInitialNews('', currentCategory); // 페이지 로드 시 검색어 없이, 기본 선택된 카테고리로 로드
+    loadInitialNews('', currentCategory);
 
 });
