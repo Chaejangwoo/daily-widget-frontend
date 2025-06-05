@@ -26,9 +26,10 @@
 
     <main>
         <section class="news-area">
-            <h2>최신 뉴스</h2> <!-- 이 부분은 로그인 상태에 따라 "OOO님을 위한 맞춤 뉴스" 등으로 변경될 수 있음 -->
+            <h2 id="news-section-title">최신 뉴스</h2>
+
             <div class="category-filters">
-                <button class="category-btn active" data-category="">전체</button>
+                <button class="category-btn active" data-category="">전체</button> <!-- "전체"는 data-category를 빈 문자열로 -->
                 <button class="category-btn" data-category="정치">정치</button>
                 <button class="category-btn" data-category="경제">경제</button>
                 <button class="category-btn" data-category="사회">사회</button>
@@ -37,10 +38,13 @@
                 <button class="category-btn" data-category="스포츠">스포츠</button>
                 <button class="category-btn" data-category="국제">국제</button>
                 <button class="category-btn" data-category="기타">기타</button>
+                <!-- 백엔드 aiProcessorService.js의 PREDEFINED_CATEGORIES와 일치하도록 관리 -->
             </div>
 
             <div class="filter-controls">
                 <input type="text" id="search-keyword" placeholder="키워드 검색">
+                <!-- 검색 버튼 (선택 사항, Enter로도 검색 가능) -->
+                <!-- <button id="search-button">검색</button> -->
             </div>
             <div id="news-list-container" class="news-list-container">
                 <!-- 뉴스 아이템들이 여기에 동적으로 추가됩니다. -->
@@ -53,6 +57,7 @@
             <h3>인기 토픽</h3>
             <ul id="topic-list">
                 <!-- <li><a href="#">#AI</a></li> -->
+                <!-- 인기 토픽은 동적으로 채워지거나, 미리 정의될 수 있습니다. -->
             </ul>
         </aside>
     </main>
@@ -62,6 +67,7 @@
         <div class="modal-content">
             <span class="close-modal-btn">×</span>
             <iframe id="modal-iframe" src="" frameborder="0" allowfullscreen></iframe>
+            <!-- allowfullscreen은 전체 화면 기능이 필요할 때 사용 -->
         </div>
     </div>
 
