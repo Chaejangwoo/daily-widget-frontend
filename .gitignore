@@ -17,6 +17,7 @@ package-lock.json # npm 5+ 버전에서는 package-lock.json을 커밋하는 것
 .env*.production
 !.env.example # .env.example 파일은 포함시키고 싶을 때 (템플릿 역할)
 
+
 # IDE / Editor specific
 .vscode/
 .idea/
@@ -41,5 +42,7 @@ dist/
 build/
 out/
 
+
+.cache/
 # Optional: Sequelize-specific (if using Sequelize CLI migrations/seeders output elsewhere)
 # sequelize-meta.json

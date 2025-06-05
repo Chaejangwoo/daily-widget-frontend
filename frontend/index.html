@@ -5,10 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Widget</title>
     <link rel="stylesheet" href="css/style.css">
-    <!-- 만약 auth.css나 keywords.css의 일부 스타일이 index.html에도 필요하다면 함께 연결할 수 있습니다.
-         예: <link rel="stylesheet" href="css/auth.css"> 
-         하지만 보통은 style.css에 필요한 모든 스타일을 정의하거나, 
-         index.html에만 적용될 특정 스타일을 style.css에 추가합니다. -->
 </head>
 <body>
     <header>
@@ -30,7 +26,19 @@
 
     <main>
         <section class="news-area">
-            <h2>오늘의 뉴스</h2> <!-- 이 부분은 로그인 상태에 따라 "OOO님을 위한 맞춤 뉴스" 등으로 변경될 수 있음 -->
+            <h2>최신 뉴스</h2> <!-- 이 부분은 로그인 상태에 따라 "OOO님을 위한 맞춤 뉴스" 등으로 변경될 수 있음 -->
+            <div class="category-filters">
+                <button class="category-btn active" data-category="">전체</button>
+                <button class="category-btn" data-category="정치">정치</button>
+                <button class="category-btn" data-category="경제">경제</button>
+                <button class="category-btn" data-category="사회">사회</button>
+                <button class="category-btn" data-category="IT/과학">IT/과학</button>
+                <button class="category-btn" data-category="생활/문화">생활/문화</button>
+                <button class="category-btn" data-category="스포츠">스포츠</button>
+                <button class="category-btn" data-category="국제">국제</button>
+                <button class="category-btn" data-category="기타">기타</button>
+            </div>
+
             <div class="filter-controls">
                 <input type="text" id="search-keyword" placeholder="키워드 검색">
             </div>

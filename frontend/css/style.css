@@ -163,6 +163,19 @@ main {
     transform: translateY(-5px);
     box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
+.news-item .news-category-tag {
+    display: inline-block; /* 다른 내용과 같은 줄에, 하지만 크기 조절 가능 */
+    background-color: #6c757d; /* 예시: 회색 계열 배경 */
+    color: white;
+    font-size: 0.7rem; /* 작은 글씨 크기 */
+    font-weight: 600;
+    padding: 0.2rem 0.5rem; /* 내부 여백 */
+    border-radius: 10px;   /* 둥근 모서리 */
+    margin-bottom: 0.4rem; /* 아래 제목과의 간격 */
+    text-transform: uppercase; /* 대문자 표시 (선택 사항) */
+    letter-spacing: 0.5px;   /* 글자 간격 (선택 사항) */
+    align-self: flex-start; /* 왼쪽 정렬 (만약 news-item이 flex container라면) */
+}
 .news-item .news-image-container {
     width: 100%;
     /* aspect-ratio: 16 / 9; */ /* 또는 카드의 정사각형 비율에 맞게 1/1 또는 다른 비율 */
@@ -312,6 +325,38 @@ main {
 }
 .news-item .original-link:hover {
     text-decoration: underline;
+}
+.category-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.category-btn {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    border: 1px solid #dee2e6;
+    border-radius: 16px;
+    background-color: #fff;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    outline: none;
+}
+
+.category-btn:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.category-btn.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+    font-weight: 600;
 }
 .empty-message {
     text-align: center;
@@ -493,6 +538,14 @@ footer {
         top: 8px;
         right: 15px;
         font-size: 24px;
+    }
+    .category-filters {
+        gap: 0.5rem;
+        justify-content: center; /* 작은 화면에서 버튼 중앙 정렬 */
+    }
+    .category-btn {
+        padding: 0.3rem 0.7rem;
+        font-size: 0.8rem;
     }
 }
 

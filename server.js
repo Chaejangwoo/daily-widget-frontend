@@ -9,7 +9,9 @@ const jwt = require('jsonwebtoken'); // JWT 토큰 생성을 위한 jsonwebtoken
 const db = require('./models'); // ./models/index.js 에서 내보낸 db 객체 (sequelize 인스턴스 포함)
 const { protect } = require('./middleware/authMiddleware'); // 인증 미들웨어 가져오기
 const newsRoutes = require('./routes/newsRoutes'); // 뉴스 라우트 불러오기
-
+// --- 스케줄러 시작 ---
+require('./scheduler'); // scheduler.js 파일을 실행하여 cron 작업들을 등록
+// --------------------
 const app = express();
 const PORT = process.env.PORT || 5001;
 

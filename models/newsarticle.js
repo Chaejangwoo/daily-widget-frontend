@@ -4,6 +4,15 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class NewsArticle extends Model {
     static associate(models) {
+      // 여기에 관계 정의 코드를 추가합니다.
+      NewsArticle.hasOne(models.Summary, { // 1:1 관계
+        foreignKey: 'articleId',
+        as: 'aiSummary' // newsArticle.aiSummary 형태로 접근
+      });
+      NewsArticle.hasMany(models.Keyword, { // 1:N 관계
+        foreignKey: 'articleId',
+        as: 'aiKeywords' // newsArticle.aiKeywords 형태로 접근
+      });
     }
   }
   NewsArticle.init({
@@ -54,11 +63,22 @@ module.exports = (sequelize, DataTypes) => {
       validate: {
         isUrl: true,          // 유효한 URL 형식인지 검사 (선택 사항)
       }
+    },
+    category: { // <<--- 카테고리 필드 추가 (선택 사항)
+      type: DataTypes.STRING,
+      allowNull: true, // 카테고리가 없는 경우도 허용
+    },
+    categoryRetryCount: { // <<--- 새로운 필드 추가
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0, // 기본값을 0으로 설정
     }
   }, {
     sequelize,
     modelName: 'NewsArticle',
     // tableName: 'NewsArticles' // 기본값
   });
+  
   return NewsArticle;
+  
 };

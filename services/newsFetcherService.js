@@ -8,10 +8,6 @@ require('dotenv').config(); // .env 파일 사용
 // XML 파서 인스턴스 생성
 const parser = new xml2js.Parser({ explicitArray: false, trim: true });
 
-// (선택 사항) NewsAPI.org 관련 변수 (만약 NewsAPI 기능도 남겨둘 경우)
-// const NEWS_API_KEY = process.env.NEWS_API_KEY;
-// const NEWS_API_BASE_URL = 'https://newsapi.org/v2';
-
 
 /**
  * 특정 URL의 웹페이지에서 기사 본문을 스크래핑합니다. (연합뉴스 기준 예시)
@@ -44,7 +40,6 @@ async function scrapeArticleContent(url) {
             console.log(`[Scraper] Found content with selector: "${mainContentSelector}"`);
 
             // 불필요한 요소들 제거 (광고, 스크립트, 스타일, 기자 정보, 관련기사, 댓글 등)
-            // 실제 연합뉴스 페이지 HTML 구조를 보면서 제거할 선택자를 추가/수정해야 합니다.
             $mainContent.find('script, style, iframe, .ad-template, .social-share-btn-wrap, .promotion_area, .link_news, .copyright, figure. όπου, div.journalist-profile, div.reporter_area, .tag_area, aside, .article_bottom_ad, #articleFSSetting, .layer_reporter_area, .ico_photoviewer').remove();
 
             // 각 문단(p 태그)의 텍스트를 가져와서 합치기
@@ -188,6 +183,24 @@ async function parseRssItems(rssItems, defaultSourceName = 'Unknown RSS Source')
         // --- 원문 내용 스크래핑 호출 ---
         const fullContent = await scrapeArticleContent(originalUrl);
         // ---
+        let category = null;
+if (item.category) { // <category> 태그가 있다면
+    if (Array.isArray(item.category)) {
+        category = item.category[0]; // 여러 개 중 첫 번째 사용 또는 모두 사용
+    } else {
+        category = item.category;
+    }
+    if (typeof category === 'object' && category._) { // xml2js 파싱 특성 고려
+        category = category._;
+    }
+}
+// 만약 카테고리 정보가 없다면, sourceName을 기반으로 추정하거나 기본값 설정 가능
+if (!category && defaultSourceName === '연합뉴스') {
+    // 연합뉴스 URL 패턴 등으로 카테고리 유추 (예시)
+    if (originalUrl.includes('/AKR') && originalUrl.includes('0001000000')) category = '정치';
+    // ... (더 많은 규칙 추가) ...
+    else category = '기타'; // 기본값
+}
 
         parsedArticles.push({
             title: title,
@@ -197,6 +210,7 @@ async function parseRssItems(rssItems, defaultSourceName = 'Unknown RSS Source')
             sourceUrl: null,
             originalUrl: originalUrl, // 이미 trim 처리됨
             imageUrl: imageUrl ? String(imageUrl).trim() : null,
+            category: category ? String(category).trim() : null,
         });
     }
     return parsedArticles;
