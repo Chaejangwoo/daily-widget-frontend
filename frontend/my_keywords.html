@@ -1,59 +1,79 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>나의 관심 키워드 - Daily Widget</title>
-    <link rel="stylesheet" href="css/style.css"> <!-- 공통 CSS -->
-    <link rel="stylesheet" href="css/keywords.css"> <!-- 키워드 페이지용 CSS (새로 생성) -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/keywords.css">
 </head>
 <body>
     <header>
-        <h1><a href="index.html" style="color: white; text-decoration: none;">Daily Widget</a></h1>
+        <h1><a href="index.html">Daily Widget</a></h1>
         <nav>
-            <span id="user-greeting" style="color: white; margin-right: 15px;"></span>
-            <button id="logout-btn">로그아웃</button>
-            <!-- 또는 <a href="index.html"><button>뉴스 홈</button></a> -->
+            <!-- auth.js가 로그인 상태에 따라 헤더 버튼을 동적으로 처리합니다 -->
+            <div id="auth-links-logged-in" style="display: none;">
+                <span id="user-greeting-main"></span>
+                <button id="logout-btn-main" class="btn-danger">로그아웃</button>
+            </div>
         </nav>
     </header>
 
-    <main class="keywords-page">
-        <section class="keywords-container">
-            <h2>나의 관심 키워드 설정</h2>
-            <p>관심 있는 키워드를 선택하거나 직접 추가해주세요. (최대 5개 선택 가능)</p>
-            
-            <div class="predefined-keywords">
-                <h3>추천 키워드:</h3>
-                <div id="keyword-options-area" class="keyword-options">
-                    <!-- 예시: JS로 동적 생성 또는 미리 정의 -->
-                    <!-- <button class="keyword-btn" data-keyword="AI">#AI</button> -->
-                </div>
-            </div>
+    <!-- ★ 대시보드 레이아웃 적용 -->
+    <div class="dashboard-layout">
+        <!-- ★ GNB 추가 -->
+        <nav class="gnb">
+            <ul>
+                <li><a href="index.html" class="gnb-item" title="뉴스 피드"><i class="icon-feed"></i><span class="gnb-tooltip">뉴스 피드</span></a></li>
+                <li><a href="my_keywords.html" class="gnb-item active" title="관심 토픽"><i class="icon-topics"></i><span class="gnb-tooltip">관심 토픽</span></a></li>
+                <li><a href="bookmarks.html" class="gnb-item" title="저장한 뉴스"><i class="icon-saved"></i><span class="gnb-tooltip">저장한 뉴스</span></a></li>
+                <li class="gnb-spacer"></li>
+                <li><a href="settings.html" class="gnb-item" title="설정"><i class="icon-settings"></i><span class="gnb-tooltip">설정</span></a></li>
+            </ul>
+        </nav>
 
-            <div class="custom-keywords">
-                <h3>직접 추가:</h3>
-                <input type="text" id="custom-keyword-input" placeholder="키워드를 입력하고 Enter 또는 추가 버튼">
-                <button id="add-keyword-btn" class="btn-secondary">추가</button>
+        <!-- ★ main 태그를 main-content 클래스로 변경 -->
+        <main class="main-content">
+    <section class="keywords-container">
+        <h2>🏷️ 나의 관심 키워드 설정</h2>
+        <p>관심 있는 키워드를 선택하거나 직접 추가해주세요. (최대 5개 선택 가능)</p>
+        
+        <!-- ★★★ 이 부분이 복원되었습니다 ★★★ -->
+        <div class="predefined-keywords">
+            <h3>추천 키워드:</h3>
+            <!-- 추천 키워드 버튼이 동적으로 생성될 영역 -->
+            <div id="keyword-options-area" class="keyword-options">
+                <!-- JS (my_keywords.js)가 여기에 버튼을 생성합니다. -->
             </div>
+        </div>
+        <!-- ★★★ 여기까지 복원 ★★★ -->
 
-            <div class="selected-keywords-area">
-                <h3>선택된 키워드:</h3>
-                <div id="selected-keywords-display" class="selected-keywords-display">
-                    <!-- 선택된 키워드가 여기에 표시됩니다 -->
-                </div>
-            </div>
+        <div class="custom-keywords">
+            <h3>직접 추가:</h3>
+            <input type="text" id="custom-keyword-input" placeholder="키워드를 입력하고 Enter 또는 추가 버튼">
+            <button id="add-keyword-btn" class="btn-secondary">추가</button>
+        </div>
 
-            <button id="save-keywords-btn" class="btn-primary">관심 키워드 저장</button>
-            <div id="message-area" class="message-area" role="alert" aria-live="assertive"></div>
-        </section>
-    </main>
+        <div class="selected-keywords-area">
+            <h3>선택된 키워드:</h3>
+            <div id="selected-keywords-display" class="selected-keywords-display"></div>
+        </div>
+
+        <button id="save-keywords-btn" class="btn-primary">관심 키워드 저장</button>
+        <div id="message-area" class="message-area" role="alert" aria-live="assertive"></div>
+    </section>
+</main>
+        
+        <!-- ★ 이 페이지에서는 인사이트 패널이 필요 없으므로 빈 공간으로 둠 -->
+        <aside class="insight-panel-placeholder"></aside>
+    </div>
 
     <footer>
         <p>© 2024 Daily Widget. All rights reserved.</p>
     </footer>
 
-    <script src="js/auth.js"></script> <!-- 공통 인증 스크립트 먼저 로드 -->
-    <script src="js/my_keywords.js"></script> <!-- 키워드 페이지용 JS -->
+    <script src="js/auth.js"></script>
+    <script src="js/my_keywords.js"></script>
 </body>
 </html>

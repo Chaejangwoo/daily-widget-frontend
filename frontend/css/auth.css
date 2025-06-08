@@ -1,5 +1,21 @@
 /* frontend/css/auth.css */
+.auth-layout-wrapper {
+    display: flex;
+    justify-content: center; /* 자식 요소를 중앙에 정렬 */
+    flex-grow: 1;
+    width: 100%;
+    max-width: 1600px; /* style.css의 dashboard-layout과 동일한 너비 */
+    margin: var(--spacing-lg) auto;
+    padding: 0 1.5rem;
+}
 
+.auth-page {
+    /* 기존 스타일 유지 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
 .auth-page main {
     display: flex;
     justify-content: center;

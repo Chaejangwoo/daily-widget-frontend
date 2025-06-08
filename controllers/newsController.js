@@ -26,13 +26,26 @@ const getAllNews = async (req, res) => {
         // --- Phase 2: 검색 및 필터링 조건(whereClause) 생성 ---
         const whereClause = {};
         if (keyword) {
-            console.log('[Backend] 검색어 처리:', keyword);
+            console.log('[Backend] 확장된 검색어 처리:', keyword);
+            
+            // ★★★ 여기가 핵심 수정 부분입니다 ★★★
             whereClause[Op.or] = [
+                // 1. 제목(title)에 키워드가 포함된 경우
                 { title: { [Op.like]: `%${keyword}%` } },
-                { content: { [Op.like]: `%${keyword}%` } }
-                // 만약 키워드 테이블에서도 검색하고 싶다면 아래 주석 해제
-                // { '$aiKeywords.keywordText$': { [Op.like]: `%${keyword}%` } } 
+                
+                // 2. 내용(content)에 키워드가 포함된 경우 (기존 로직)
+                { content: { [Op.like]: `%${keyword}%` } },
+                
+                // 3. 카테고리(category)가 키워드와 일치하는 경우
+                { category: { [Op.eq]: keyword } }, // Op.eq는 정확한 일치
+                
+                // 4. Keyword 테이블에 해당 키워드가 있는 경우 (Sequelize의 Association 검색)
+                // 모델 관계 설정에 정의된 'as' 값을 사용해야 합니다. (예: 'aiKeywords')
+                { '$aiKeywords.keywordText$': { [Op.eq]: keyword } }
             ];
+        }
+        if (category && category.trim() !== '' && category.toLowerCase() !== 'all') {
+            whereClause.category = category;
         }
         if (sourceName) {
             console.log('[Backend] 출처 필터링:', sourceName);

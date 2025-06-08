@@ -582,6 +582,18 @@ footer {
 }
 .insight-widget ul li:last-child a { border-bottom: none; }
 .insight-widget ul li a:hover { color: var(--primary-color); padding-left: var(--spacing-sm); }
+.insight-panel-placeholder {
+    width: 280px; /* insight-panel과 동일한 너비 */
+    flex-shrink: 0;
+}
+
+/* 반응형 조정 부분도 수정 */
+@media (max-width: 1200px) {
+    /* ... */
+    .insight-panel, .insight-panel-placeholder { /* 플레이스홀더도 함께 숨김 */
+        display: none;
+    }
+}
 .keyword-cloud { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); }
 .keyword-cloud span {
     font-size: 0.85rem;
