@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('search-keyword');
     const newsSectionTitleEl = document.getElementById('news-section-title');
     const categoryButtons = document.querySelectorAll('.category-btn');
-
     const modal = document.getElementById('news-modal');
     const modalIframe = document.getElementById('modal-iframe');
     const closeModalBtn = document.querySelector('.close-modal-btn');
@@ -20,7 +19,29 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSearchTerm = '';
     let currentCategory = '';
 
+    /**
+     * 스켈레톤 UI를 생성하여 화면에 표시합니다.
+     */
+    function renderSkeletons() {
+        if (!newsListContainer) return;
+        newsListContainer.innerHTML = '';
+        for (let i = 0; i < itemsPerPage; i++) {
+            const skeleton = `
+                <div class="skeleton-card">
+                    <div class="skeleton-item skeleton-image"></div>
+                    <div class="skeleton-item skeleton-title"></div>
+                    <div class="skeleton-item skeleton-text"></div>
+                    <div class="skeleton-item skeleton-text"></div>
+                    <div class="skeleton-item skeleton-text"></div>
+                </div>
+            `;
+            newsListContainer.insertAdjacentHTML('beforeend', skeleton);
+        }
+    }
+    
+    // 기존 renderNewsItem 함수는 그대로 사용합니다. (CSS가 스타일을 처리하므로)
     function renderNewsItem(item) {
+        // ... 기존 renderNewsItem 함수 내용 전체를 여기에 복사 ...
         const article = document.createElement('article');
         article.classList.add('news-item');
 
@@ -34,18 +55,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.remove();
                 const placeholder = document.createElement('span');
                 placeholder.classList.add('placeholder-icon');
-                placeholder.textContent = '🖼️';
+                placeholder.textContent = '📰'; // 아이콘 변경
                 imageContainer.innerHTML = '';
                 imageContainer.appendChild(placeholder);
-                imageContainer.style.backgroundColor = '#e9ecef';
+                imageContainer.style.backgroundColor = 'var(--bg-tertiary-color)';
             };
             imageContainer.appendChild(img);
         } else {
             const placeholder = document.createElement('span');
             placeholder.classList.add('placeholder-icon');
-            placeholder.textContent = '🖼️';
+            placeholder.textContent = '📰';
             imageContainer.appendChild(placeholder);
-            imageContainer.style.backgroundColor = '#e9ecef';
+            imageContainer.style.backgroundColor = 'var(--bg-tertiary-color)';
         }
         article.appendChild(imageContainer);
 
@@ -88,18 +109,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const isCardExpanded = article.classList.toggle('expanded-card');
             toggleSummaryBtn.textContent = isCardExpanded ? '접기' : '더보기';
             toggleSummaryBtn.setAttribute('aria-expanded', isCardExpanded.toString());
-            if (isCardExpanded) {
-                toggleSummaryBtn.style.display = 'inline';
-            } else {
+            // 펼쳐지거나 접힐 때, 토글 버튼 표시 여부를 다시 확인하여 자연스럽게 만듦
+            if (!isCardExpanded) {
                 const titleEl = article.querySelector('h2');
                 if (summaryElement && titleEl) {
-                    const titleStyle = window.getComputedStyle(titleEl);
-                    const titleLineHeight = parseFloat(titleStyle.lineHeight) || (parseFloat(titleStyle.fontSize) * 1.3);
-                    const titleHeight = titleEl.offsetHeight;
-                    const titleLines = titleLineHeight > 0 ? Math.round(titleHeight / titleLineHeight) : 0;
+                    const titleLines = getElementLineCount(titleEl);
                     let allowedSummaryLines = titleLines > 2 ? 3 : 4;
                     checkAndShowToggleBtn(summaryElement, toggleSummaryBtn, allowedSummaryLines);
                 }
+            } else {
+                 toggleSummaryBtn.style.display = 'inline';
             }
         });
 
@@ -130,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const linkElement = document.createElement('a');
         linkElement.href = item.originalUrl || "#";
         linkElement.classList.add('original-link');
-        linkElement.textContent = '원문 보기';
+        linkElement.textContent = '원문 보기 →'; // 아이콘 추가
         linkElement.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();
@@ -145,7 +164,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return article;
     }
 
+    function getElementLineCount(element) {
+        const style = window.getComputedStyle(element);
+        let lineHeight = parseFloat(style.lineHeight);
+        if (isNaN(lineHeight) || style.lineHeight === 'normal') {
+            lineHeight = parseFloat(style.fontSize) * 1.4; // fallback
+        }
+        const height = element.offsetHeight;
+        return lineHeight > 0 ? Math.round(height / lineHeight) : 0;
+    }
+
     function checkAndShowToggleBtn(summaryElement, toggleButton, numLinesAllowedByCss) {
+        // 기존 checkAndShowToggleBtn 함수 내용 전체를 여기에 복사
         if (!summaryElement || !toggleButton) {
             if (toggleButton) toggleButton.style.display = 'none';
             return;
@@ -166,10 +196,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const computedStyle = window.getComputedStyle(summaryElement);
             let lineHeight = parseFloat(computedStyle.lineHeight);
             if (isNaN(lineHeight) || computedStyle.lineHeight === 'normal') {
-                lineHeight = parseFloat(computedStyle.fontSize) * 1.4;
+                lineHeight = parseFloat(computedStyle.fontSize) * 1.5; // CSS와 일치
             }
             const expectedVisibleHeight = lineHeight * numLinesAllowedByCss;
-            const tolerance = 2;
+            const tolerance = 2; // 약간의 오차 허용
 
             if (actualFullHeight > expectedVisibleHeight + tolerance) {
                 toggleButton.style.display = 'inline';
@@ -179,33 +209,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function displayNews(newsArray) {
+    function displayNews(newsArray, isInitialLoad = false) {
         if (!newsListContainer) return;
 
+        if (isInitialLoad) {
+            newsListContainer.innerHTML = '';
+        }
+
         if (!newsArray || newsArray.length === 0) {
-            newsListContainer.innerHTML = `<p class="empty-message">${currentSearchTerm ? `"${currentSearchTerm}"에 대한 검색 결과가 없습니다.` : (currentCategory ? `[${currentCategory}] 카테고리에 뉴스가 없습니다.` : '표시할 뉴스가 없습니다.')}</p>`;
+            if (isInitialLoad) {
+                newsListContainer.innerHTML = `<p class="empty-message">${currentSearchTerm ? `"${currentSearchTerm}"에 대한 검색 결과가 없습니다.` : (currentCategory ? `[${currentCategory}] 카테고리에 뉴스가 없습니다.` : '표시할 뉴스가 없습니다.')}</p>`;
+            }
             if (loadMoreBtn) loadMoreBtn.style.display = 'none';
             return;
         }
 
-        newsArray.forEach(item => {
+        const baseDelay = isInitialLoad ? 0 : newsListContainer.children.length;
+
+        newsArray.forEach((item, index) => {
             const newsElement = renderNewsItem(item);
+            
+            // 애니메이션 딜레이 추가
+            newsElement.style.animationDelay = `${(baseDelay + index) * 70}ms`;
+
             newsListContainer.appendChild(newsElement);
 
+            // ... 기존 요약 더보기/접기 로직
             requestAnimationFrame(() => {
                 const summaryElementFromDOM = newsElement.querySelector('.summary');
                 const toggleSummaryBtnFromDOM = newsElement.querySelector('.toggle-summary-btn');
                 const titleElementFromDOM = newsElement.querySelector('h2');
-
+                
                 if (summaryElementFromDOM && toggleSummaryBtnFromDOM && titleElementFromDOM) {
-                    const titleStyle = window.getComputedStyle(titleElementFromDOM);
-                    let titleLineHeight = parseFloat(titleStyle.lineHeight);
-                    if (isNaN(titleLineHeight) || titleStyle.lineHeight === 'normal') {
-                         titleLineHeight = parseFloat(titleStyle.fontSize) * 1.3;
-                    }
-                    const titleHeight = titleElementFromDOM.offsetHeight;
-                    const titleLines = titleLineHeight > 0 ? Math.round(titleHeight / titleLineHeight) : 0;
-
+                    const titleLines = getElementLineCount(titleElementFromDOM);
                     let allowedSummaryLines = 4;
                     if (titleLines > 2) {
                         summaryElementFromDOM.classList.add('summary-shorten');
@@ -219,15 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function updateLoadMoreButtonVisibility() {
-        if (!loadMoreBtn) return;
-        if (currentPage < totalPages && newsListContainer && newsListContainer.children.length > 0 && newsListContainer.children[0].tagName !== 'P') {
-            loadMoreBtn.style.display = 'block';
-        } else {
-            loadMoreBtn.style.display = 'none';
-        }
-    }
-
     async function loadInitialNews(searchTerm = '', category = '') {
         if (isLoading) return;
         isLoading = true;
@@ -235,87 +262,54 @@ document.addEventListener('DOMContentLoaded', () => {
         currentCategory = category.trim();
         if (loadMoreBtn) loadMoreBtn.textContent = '로딩 중...';
         currentPage = 1;
-        if (newsListContainer) newsListContainer.innerHTML = '';
+        
+        renderSkeletons(); // <<<<<<<<<<< 스켈레톤 UI 표시
 
         try {
+            // ... 기존 API 호출 로직은 그대로 ...
             let apiUrl = `${API_BASE_URL}/news?page=${currentPage}&limit=${itemsPerPage}&sortBy=publishedDate&sortOrder=DESC`;
 
-            if (currentSearchTerm) {
-                apiUrl += `&keyword=${encodeURIComponent(currentSearchTerm)}`;
-            }
-            if (currentCategory) {
-                apiUrl += `&category=${encodeURIComponent(currentCategory)}`;
-            }
-
-            // --- 관심 키워드 파라미터 추가 로직 ---
+            if (currentSearchTerm) apiUrl += `&keyword=${encodeURIComponent(currentSearchTerm)}`;
+            if (currentCategory) apiUrl += `&category=${encodeURIComponent(currentCategory)}`;
+            
             const isLoggedInUser = typeof isLoggedIn === 'function' && isLoggedIn();
-             console.log('[TitleCheck] isLoggedInUser:', isLoggedInUser); // 로그 추가
-            // 로그인 상태이고, 특정 검색어나 카테고리 필터가 없을 때만 관심사 파라미터 추가
             if (isLoggedInUser && !currentSearchTerm && !currentCategory) {
                 const userInterestsString = localStorage.getItem('userInterests');
-                console.log('[TitleCheck] userInterestsString from localStorage:', userInterestsString); // 로그 추가
                 if (userInterestsString) {
-                    try {
-                        const userInterestsArray = JSON.parse(userInterestsString);
-                        if (Array.isArray(userInterestsArray) && userInterestsArray.length > 0) {
-                            apiUrl += `&user_interests=${encodeURIComponent(userInterestsArray.join(','))}`;
-                            console.log("API 요청 시 사용자 관심사 전달:", userInterestsArray.join(','));
-                        }
-                    } catch (e) {
-                        console.error("localStorage의 userInterests 파싱 오류:", e);
+                    const userInterestsArray = JSON.parse(userInterestsString);
+                    if (Array.isArray(userInterestsArray) && userInterestsArray.length > 0) {
+                        apiUrl += `&user_interests=${encodeURIComponent(userInterestsArray.join(','))}`;
                     }
                 }
             }
-            console.log('[TitleCheck] Constructed apiUrl:', apiUrl); // apiUrl 최종본 로그 추가
-            // --- 관심 키워드 파라미터 추가 로직 끝 ---
-
-
-            if (typeof updateHeaderUI === 'function') updateHeaderUI();
-            const userInfo = typeof getUserInfo === 'function' ? getUserInfo() : null;
-            console.log('[TitleCheck] userInfo:', userInfo); // 로그 추가
-
+            // ... 제목 업데이트 로직은 그대로 ...
             if (newsSectionTitleEl) {
                 let titleText = '';
                 const activeCategoryBtn = document.querySelector('.category-btn.active');
                 const categoryDisplayText = activeCategoryBtn ? (activeCategoryBtn.dataset.category === '' ? '최신' : activeCategoryBtn.dataset.category) : '최신';
-                // --- 조건 확인을 위한 로그 추가 ---
-            console.log('[TitleCheck] Condition for 맞춤 뉴스:');
-            console.log(`  isLoggedInUser: ${isLoggedInUser}`);
-            console.log(`  userInfo && userInfo.username: ${!!(userInfo && userInfo.username)} (username: ${userInfo ? userInfo.username : 'N/A'})`);
-            console.log(`  !currentCategory: ${!currentCategory} (currentCategory: "${currentCategory}")`);
-            console.log(`  !currentSearchTerm: ${!currentSearchTerm} (currentSearchTerm: "${currentSearchTerm}")`);
-            console.log(`  apiUrl.includes('user_interests'): ${apiUrl.includes('user_interests')}`);
-            // --- 조건 확인 로그 끝 ---
-
+                
+                const userInfo = typeof getUserInfo === 'function' ? getUserInfo() : null;
                 if (currentSearchTerm) {
-                    titleText = `[${categoryDisplayText}] "${currentSearchTerm}" 검색 결과`;
+                    titleText = `"${currentSearchTerm}" 검색 결과`;
                 } else if (isLoggedInUser && userInfo && userInfo.username && !currentCategory && !currentSearchTerm && apiUrl.includes('user_interests')) {
-                    // user_interests 파라미터가 실제로 추가되었을 때만 "맞춤 뉴스" 문구 표시
                     titleText = `${userInfo.username}님을 위한 맞춤 뉴스`;
                 } else {
-                    titleText = `[${categoryDisplayText}] 뉴스`;
+                    titleText = `${categoryDisplayText} 뉴스`;
                 }
                 newsSectionTitleEl.textContent = titleText;
-                console.log("뉴스 섹션 제목 업데이트:", titleText); 
-
             }
 
-            console.log('Requesting API URL (Initial):', apiUrl);
             const response = await fetch(apiUrl);
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('뉴스 로드 실패:', response.status, errorText);
-                if(newsListContainer) newsListContainer.innerHTML = `<p class="empty-message">뉴스를 불러오는 데 실패했습니다. (오류: ${response.status})</p>`;
-                totalPages = 0;
-                return;
-            }
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
             const data = await response.json();
-
-            displayNews(data.news || []);
+            
+            // 스켈레톤을 실제 데이터로 교체
+            displayNews(data.news || [], true);
             totalPages = data.totalPages || 1;
 
         } catch (error) {
-            console.error('뉴스 로드 중 네트워크 또는 기타 오류:', error);
+            console.error('뉴스 로드 중 오류:', error);
             if(newsListContainer) newsListContainer.innerHTML = `<p class="empty-message">뉴스 로드 중 오류가 발생했습니다. (${error.message})</p>`;
             totalPages = 0;
         } finally {
@@ -331,70 +325,35 @@ document.addEventListener('DOMContentLoaded', () => {
         if (loadMoreBtn) loadMoreBtn.textContent = '로딩 중...';
         currentPage++;
         try {
+            // ... 기존 loadMoreNews의 API 호출 로직은 그대로 ...
             let apiUrl = `${API_BASE_URL}/news?page=${currentPage}&limit=${itemsPerPage}&sortBy=publishedDate&sortOrder=DESC`;
-            if (currentSearchTerm) {
-                apiUrl += `&keyword=${encodeURIComponent(currentSearchTerm)}`;
-            }
-            if (currentCategory) {
-                apiUrl += `&category=${encodeURIComponent(currentCategory)}`;
-            }
-            // "더 보기" 시에는 관심사 파라미터를 항상 포함할지, 아니면 초기 로드 조건과 동일하게 할지 결정 필요
-            // 여기서는 초기 로드와 동일하게, 검색어나 카테고리 필터가 없을 때만 관심사 파라미터 포함 (선택적)
+            if (currentSearchTerm) apiUrl += `&keyword=${encodeURIComponent(currentSearchTerm)}`;
+            if (currentCategory) apiUrl += `&category=${encodeURIComponent(currentCategory)}`;
+            
             const isLoggedInUser = typeof isLoggedIn === 'function' && isLoggedIn();
             if (isLoggedInUser && !currentSearchTerm && !currentCategory) {
                 const userInterestsString = localStorage.getItem('userInterests');
                 if (userInterestsString) {
-                    try {
-                        const userInterestsArray = JSON.parse(userInterestsString);
-                        if (Array.isArray(userInterestsArray) && userInterestsArray.length > 0) {
-                            apiUrl += `&user_interests=${encodeURIComponent(userInterestsArray.join(','))}`;
-                        }
-                    } catch (e) { console.error("localStorage의 userInterests 파싱 오류 (더보기):", e); }
+                     const userInterestsArray = JSON.parse(userInterestsString);
+                    if (Array.isArray(userInterestsArray) && userInterestsArray.length > 0) {
+                        apiUrl += `&user_interests=${encodeURIComponent(userInterestsArray.join(','))}`;
+                    }
                 }
             }
-
-
-            console.log('Requesting API URL (More):', apiUrl);
+            
             const response = await fetch(apiUrl);
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('추가 뉴스 로드 실패:', response.status, errorText);
-                currentPage--;
-                return;
-            }
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
 
             if (data.news && data.news.length > 0) {
-                data.news.forEach(item => {
-                    const newsElement = renderNewsItem(item);
-                    if (newsListContainer) newsListContainer.appendChild(newsElement);
-                    requestAnimationFrame(() => {
-                        const summaryElementFromDOM = newsElement.querySelector('.summary');
-                        const toggleSummaryBtnFromDOM = newsElement.querySelector('.toggle-summary-btn');
-                        const titleElementFromDOM = newsElement.querySelector('h2');
-                        if (summaryElementFromDOM && toggleSummaryBtnFromDOM && titleElementFromDOM) {
-                            const titleStyle = window.getComputedStyle(titleElementFromDOM);
-                            let titleLineHeight = parseFloat(titleStyle.lineHeight);
-                            if (isNaN(titleLineHeight) || titleStyle.lineHeight === 'normal') {
-                                titleLineHeight = parseFloat(titleStyle.fontSize) * 1.3;
-                            }
-                            const titleHeight = titleElementFromDOM.offsetHeight;
-                            const titleLines = titleLineHeight > 0 ? Math.round(titleHeight / titleLineHeight) : 0;
-                            let allowedSummaryLines = titleLines > 2 ? 3 : 4;
-                            if (titleLines > 2) summaryElementFromDOM.classList.add('summary-shorten');
-                            else summaryElementFromDOM.classList.remove('summary-shorten');
-                            
-                            checkAndShowToggleBtn(summaryElementFromDOM, toggleSummaryBtnFromDOM, allowedSummaryLines);
-                        }
-                    });
-                });
+                displayNews(data.news, false); // isInitialLoad = false
                 totalPages = data.totalPages;
             } else {
-                console.log("더 이상 로드할 뉴스가 없습니다.");
+                 console.log("더 이상 로드할 뉴스가 없습니다.");
             }
 
         } catch (error) {
-            console.error('추가 뉴스 로드 중 네트워크 또는 기타 오류:', error);
+            console.error('추가 뉴스 로드 중 오류:', error);
             currentPage--;
         } finally {
             isLoading = false;
@@ -402,7 +361,19 @@ document.addEventListener('DOMContentLoaded', () => {
             updateLoadMoreButtonVisibility();
         }
     }
-
+    
+    // 이 아래의 나머지 함수들(updateLoadMoreButtonVisibility, handleKeywordClick, open/close Modal 등)은
+    // 기존 코드 그대로 사용하면 됩니다. 
+    
+    function updateLoadMoreButtonVisibility() {
+        if (!loadMoreBtn) return;
+        if (currentPage < totalPages && newsListContainer && newsListContainer.children.length > 0 && !newsListContainer.querySelector('.empty-message')) {
+            loadMoreBtn.style.display = 'block';
+        } else {
+            loadMoreBtn.style.display = 'none';
+        }
+    }
+    
     function handleKeywordClick(keyword) {
         if (!searchInput) return;
         searchInput.value = keyword;
@@ -413,8 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openModalWithArticle(url) {
         if (!modal || !modalIframe) return;
-        console.log("모달 열기 시도 URL:", url);
-        modalIframe.src = '';
+        modalIframe.src = 'about:blank'; // 깜빡임 방지
         setTimeout(() => {
             modalIframe.src = url;
             modal.style.display = 'block';
@@ -425,10 +395,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeModal() {
         if (!modal || !modalIframe) return;
         modal.style.display = 'none';
-        modalIframe.src = '';
+        modalIframe.src = 'about:blank';
         document.body.style.overflow = '';
     }
 
+    // 이벤트 리스너들은 기존 코드를 그대로 유지합니다.
     if (categoryButtons.length > 0) {
         categoryButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -436,56 +407,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 categoryButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
                 const selectedCategory = button.dataset.category;
-                console.log('카테고리 버튼 클릭됨. 선택된 카테고리:', selectedCategory);
                 loadInitialNews(searchInput ? searchInput.value.trim() : '', selectedCategory);
             });
         });
     }
-
     if (searchInput) {
+        let debounceTimer;
+        searchInput.addEventListener('input', (event) => {
+             clearTimeout(debounceTimer);
+             debounceTimer = setTimeout(() => {
+                const searchTerm = event.target.value.trim();
+                 if (searchTerm === '' && currentSearchTerm !== '') {
+                     const activeCategoryButton = document.querySelector('.category-btn.active');
+                     const categoryToSearch = activeCategoryButton ? activeCategoryButton.dataset.category : '';
+                     loadInitialNews('', categoryToSearch);
+                 }
+             }, 300);
+        });
         searchInput.addEventListener('keyup', (event) => {
             if (event.key === 'Enter') {
                 const activeCategoryButton = document.querySelector('.category-btn.active');
                 const categoryToSearch = activeCategoryButton ? activeCategoryButton.dataset.category : '';
-                console.log('검색창 Enter. 검색어:', event.target.value.trim(), '현재 카테고리:', categoryToSearch);
                 loadInitialNews(event.target.value.trim(), categoryToSearch);
             }
         });
-        searchInput.addEventListener('input', (event) => {
-            if (event.target.value.trim() === '' && currentSearchTerm !== '') {
-                const activeCategoryButton = document.querySelector('.category-btn.active');
-                const categoryToSearch = activeCategoryButton ? activeCategoryButton.dataset.category : '';
-                console.log('검색창 비워짐. 현재 카테고리:', categoryToSearch, '로 재검색');
-                loadInitialNews('', categoryToSearch);
-            }
-        });
     }
-
     if (loadMoreBtn) {
         loadMoreBtn.addEventListener('click', loadMoreNews);
     }
-
     if (closeModalBtn && modal) {
         closeModalBtn.addEventListener('click', closeModal);
         window.addEventListener('click', (event) => {
-            if (event.target === modal) {
-                closeModal();
-            }
+            if (event.target === modal) closeModal();
         });
         window.addEventListener('keydown', (event) => {
-            if (modal && event.key === 'Escape' && modal.style.display === 'block') {
-                closeModal();
-            }
+            if (modal && event.key === 'Escape' && modal.style.display === 'block') closeModal();
         });
     }
 
+    // 초기화 로직
     if (typeof updateHeaderUI === 'function') {
         updateHeaderUI();
     }
-
     const initialActiveCategoryButton = document.querySelector('.category-btn.active');
     currentCategory = initialActiveCategoryButton ? initialActiveCategoryButton.dataset.category : '';
-    console.log('초기 실행. 카테고리:', currentCategory);
     loadInitialNews('', currentCategory);
-
 });

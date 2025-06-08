@@ -1,6 +1,73 @@
 /* frontend/css/style.css */
 
-/* Reset & Basic Styles */
+/* ---------------------------------- */
+/* 1. Global Design System (디자인 시스템) */
+/* ---------------------------------- */
+:root {
+    /* Color Palette */
+    --primary-color: #5865F2;
+    --primary-hover-color: #4752C4;
+    --secondary-color: #3BA55D;
+    --secondary-hover-color: #2D7D46;
+    --danger-color: #ED4245;
+    --danger-hover-color: #C73032;
+
+    --bg-color: #F7F8FC;
+    --bg-secondary-color: #FFFFFF;
+    --bg-tertiary-color: #EBEDF0;
+    --border-color: #E3E5E8;
+    --shadow-color-light: rgba(58, 58, 92, 0.05);
+    --shadow-color-medium: rgba(58, 58, 92, 0.1);
+    --shadow-color-dark: rgba(58, 58, 92, 0.15);
+
+    --text-primary-color: #2E3338;
+    --text-secondary-color: #5E6772;
+    --text-tertiary-color: #8E949B;
+    --text-on-primary-color: #FFFFFF;
+
+    /* Typography */
+    --font-family-main: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --line-height-base: 1.6;
+
+    /* Spacing & Radius */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --border-radius-sm: 6px;
+    --border-radius-md: 12px;
+    --border-radius-lg: 16px;
+
+    /* Transitions & Animations */
+    --transition-fast: all 0.2s ease-in-out;
+    --transition-normal: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 다크 모드 (선택 사항) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-color: #7289da;
+        --primary-hover-color: #8a9ff0;
+
+        --bg-color: #202225;
+        --bg-secondary-color: #2f3136;
+        --bg-tertiary-color: #36393f;
+        --border-color: #40444b;
+        --shadow-color-light: rgba(0, 0, 0, 0.1);
+        --shadow-color-medium: rgba(0, 0, 0, 0.2);
+        --shadow-color-dark: rgba(0, 0, 0, 0.3);
+
+        --text-primary-color: #dcddde;
+        --text-secondary-color: #b9bbbe;
+        --text-tertiary-color: #8e9095;
+    }
+}
+
+
+/* ---------------------------------- */
+/* 2. Base & Layout Styles (기본 레이아웃) */
+/* ---------------------------------- */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -8,425 +75,387 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
-    background-color: #f8f9fa;
-    color: #343a40;
+    font-family: var(--font-family-main);
+    line-height: var(--line-height-base);
+    background-color: var(--bg-color);
+    color: var(--text-primary-color);
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* Header ... (이하 동일) ... */
 header {
-    background: #343a40;
-    color: #fff;
+    background: var(--bg-secondary-color);
+    color: var(--text-primary-color);
     padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px var(--shadow-color-light);
+    border-bottom: 1px solid var(--border-color);
     position: sticky;
     top: 0;
     z-index: 900;
 }
 
-header h1 {
-    margin: 0;
-    font-size: 1.8rem;
-}
 header h1 a {
-    color: white;
+    color: var(--primary-color);
     text-decoration: none;
-}
-
-header nav #auth-links-logged-out,
-header nav #auth-links-logged-in {
-    display: flex;
-    align-items: center;
+    font-size: 1.8rem;
+    font-weight: 800;
 }
 
 header nav button {
-    background-color: #007bff;
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--text-on-primary-color);
     border: none;
-    padding: 0.6rem 1rem;
-    margin-left: 0.5rem;
-    border-radius: 4px;
+    padding: 0.7rem 1.2rem;
+    margin-left: var(--spacing-sm);
+    border-radius: var(--border-radius-md);
     cursor: pointer;
     font-size: 0.9rem;
-    transition: background-color 0.2s ease-in-out;
+    font-weight: 600;
+    transition: var(--transition-fast);
     text-decoration: none;
 }
 header nav button:hover {
-    background-color: #0056b3;
+    background-color: var(--primary-hover-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px color-mix(in srgb, var(--primary-color) 30%, transparent);
 }
-
 header nav .btn-secondary {
-    background-color: #6c757d;
+    background-color: var(--bg-tertiary-color);
+    color: var(--text-secondary-color);
 }
 header nav .btn-secondary:hover {
-    background-color: #5a6268;
+    background-color: var(--border-color);
+    color: var(--text-primary-color);
 }
-
 header nav .btn-danger {
-    background-color: #dc3545;
+    background-color: var(--danger-color);
 }
 header nav .btn-danger:hover {
-    background-color: #c82333;
+    background-color: var(--danger-hover-color);
 }
-
 header nav #user-greeting-main,
 header nav #user-greeting {
-    color: white;
-    margin-right: 15px;
+    color: var(--text-secondary-color);
+    margin-right: var(--spacing-md);
     font-size: 0.9rem;
+    font-weight: 500;
 }
 
-/* Main Content Area ... (이하 동일) ... */
 main {
     flex-grow: 1;
     width: 100%;
     max-width: 1200px;
-    margin: 20px auto;
+    margin: var(--spacing-lg) auto;
     padding: 0 1rem;
     display: flex;
-    gap: 20px;
+    gap: var(--spacing-lg);
 }
 
 .news-area {
     flex: 3;
-    background: #fff;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
-
 .news-area > h2 {
-    font-size: 1.6rem;
-    color: #333;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 0.5rem;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary-color);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
 }
-
 .filter-controls {
-    margin-bottom: 1.5rem;
-    display: flex;
-    gap: 10px;
-    align-items: center;
+    margin-bottom: var(--spacing-lg);
 }
-
 #search-keyword {
-    flex-grow: 1;
-    padding: 0.8rem 1rem;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
+    width: 100%;
+    padding: 0.9rem 1.1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
     font-size: 1rem;
+    background-color: var(--bg-secondary-color);
+    color: var(--text-primary-color);
+    transition: var(--transition-fast);
 }
-
 #search-keyword:focus {
     outline: none;
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 15%, transparent);
 }
 
+.category-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+.category-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    background-color: var(--bg-secondary-color);
+    color: var(--text-secondary-color);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    outline: none;
+}
+.category-btn:hover {
+    background-color: var(--bg-tertiary-color);
+    border-color: var(--text-tertiary-color);
+    color: var(--text-primary-color);
+}
+.category-btn.active {
+    background-color: var(--primary-color);
+    color: var(--text-on-primary-color);
+    border-color: var(--primary-color);
+    font-weight: 600;
+    box-shadow: 0 4px 10px color-mix(in srgb, var(--primary-color) 20%, transparent);
+}
+
+/* ---------------------------------- */
+/* 3. News Card (뉴스 카드)             */
+/* ---------------------------------- */
 .news-list-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+    gap: var(--spacing-lg);
 }
 
-/* --- News Item Styling 수정 --- */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .news-item {
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 0.7rem; /* 내부 패딩 조절 */
-    aspect-ratio: 1 / 1;
+    background-color: var(--bg-secondary-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-md);
     display: flex;
     flex-direction: column;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, aspect-ratio 0.3s ease-in-out, height 0.3s ease-in-out;
-    cursor: default;
-    overflow: hidden; /* 카드 자체에서 넘치는 것 숨김 (중요) */
+    box-shadow: 0 4px 20px var(--shadow-color-light);
+    transition: var(--transition-normal);
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease-out forwards;
 }
-
-.news-item.expanded-card {
-    aspect-ratio: auto;
-    height: auto;
-    min-height: 250px;
-    /* overflow: visible; 카드가 늘어나면 내부 내용도 보이도록 */
-}
-
 .news-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px var(--shadow-color-medium);
 }
-.news-item .news-category-tag {
-    display: inline-block; /* 다른 내용과 같은 줄에, 하지만 크기 조절 가능 */
-    background-color: #6c757d; /* 예시: 회색 계열 배경 */
-    color: white;
-    font-size: 0.7rem; /* 작은 글씨 크기 */
-    font-weight: 600;
-    padding: 0.2rem 0.5rem; /* 내부 여백 */
-    border-radius: 10px;   /* 둥근 모서리 */
-    margin-bottom: 0.4rem; /* 아래 제목과의 간격 */
-    text-transform: uppercase; /* 대문자 표시 (선택 사항) */
-    letter-spacing: 0.5px;   /* 글자 간격 (선택 사항) */
-    align-self: flex-start; /* 왼쪽 정렬 (만약 news-item이 flex container라면) */
-}
+
 .news-item .news-image-container {
     width: 100%;
-    /* aspect-ratio: 16 / 9; */ /* 또는 카드의 정사각형 비율에 맞게 1/1 또는 다른 비율 */
-    height: 120px; /* 예시: 고정 높이, 또는 padding-top 트릭으로 비율 유지 가능 */
-    background-color: #f0f0f0; /* 이미지 없을 때 기본 배경색 */
+    height: 160px;
+    background-color: var(--bg-tertiary-color);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    margin-bottom: 0.7rem; /* 이미지와 제목 사이 간격 */
-    border-radius: 4px; /* 이미지 컨테이너에도 약간의 둥근 모서리 (선택) */
+    margin-bottom: var(--spacing-md);
+    border-radius: var(--border-radius-md);
 }
-
 .news-item .news-image-container img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* 이미지가 컨테이너를 꽉 채우면서 비율 유지 (잘릴 수 있음) */
-    /* object-fit: contain; 이미지가 잘리지 않고 모두 보이지만, 여백 생길 수 있음 */
-    display: block; /* 이미지 아래 불필요한 여백 제거 */
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+.news-item:hover .news-image-container img {
+    transform: scale(1.05);
+}
+.news-item .news-image-container .placeholder-icon {
+    font-size: 2.5rem;
+    color: var(--text-tertiary-color);
 }
 
-.news-item .news-image-container .placeholder-icon {
-    font-size: 2.5rem; /* 아이콘 크기 */
-    color: #adb5bd;   /* 아이콘 색상 */
+.news-item .news-category-tag {
+    align-self: flex-start;
+    background-color: var(--bg-tertiary-color);
+    color: var(--text-secondary-color);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-lg);
+    margin-bottom: var(--spacing-sm);
+    text-transform: uppercase;
 }
+
 .news-item h2 {
-    font-size: 1.1rem;
-    color: #007bff;
-    margin-bottom: 0.3rem; /* 간격 미세 조정 */
-    line-height: 1.3;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary-color);
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
-    overflow: hidden; /* ellipsis를 위해 필수 */
+    overflow: hidden;
     text-overflow: ellipsis;
-    /* min-height를 주면 1줄 제목도 2줄 높이를 차지하게 됨.
-       만약 1줄 제목은 1줄 높이만 차지하게 하려면 JS로 클래스 추가 후 min-height 조절 필요.
-       일단은 line-clamp에 맡기고, h2가 차지하는 공간이 확보되도록 다른 요소 조절.
-    */
-    /* height: calc(1.1rem * 1.3 * 2); */ /* 고정 높이보다는 line-clamp에 의존 */
+    min-height: calc(1.15rem * 1.4 * 2);
+    transition: color 0.2s ease;
+}
+.news-item:hover h2 {
+    color: var(--primary-color);
 }
 
 .news-item .summary-wrapper {
-    flex-grow: 1; /* 남는 공간 최대한 활용 */
-    min-height: 0; /* flex 아이템의 올바른 수축/확장을 위해 */
+    flex-grow: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* 내부 p.summary가 넘칠 때 여기서 ellipsis가 잘 적용되도록 */
-    margin-bottom: 0.3rem; /* 버튼과의 간격 */
+    overflow: hidden;
+    margin-bottom: var(--spacing-sm);
 }
-
 .news-item .summary {
-    font-size: 0.85rem;
-    color: #495057;
-    line-height: 1.4;
+    font-size: 0.9rem;
+    color: var(--text-secondary-color);
+    line-height: 1.5;
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    overflow: hidden; /* ellipsis를 위해 필수 */
+    overflow: hidden;
     text-overflow: ellipsis;
-    -webkit-line-clamp: 4; /* 기본: 제목 1~2줄 시, 요약 4줄 */
-    /* height나 max-height를 직접 설정하면 line-clamp와 충돌하거나 계산이 복잡해짐.
-       summary-wrapper의 flex-grow와 overflow:hidden에 의존하여 공간 내에서 line-clamp되도록 유도.
-    */
+    -webkit-line-clamp: 4;
+    transition: max-height 0.5s cubic-bezier(0.23, 1, 0.32, 1);
 }
-
 .news-item .summary.summary-shorten {
-    -webkit-line-clamp: 3; /* 제목 3줄 이상 시, 요약 3줄 */
+    -webkit-line-clamp: 3;
 }
-
-.news-item.expanded-card .summary,
-.news-item.expanded-card .summary.summary-shorten { /* 펼쳤을 때는 shorten 클래스 무시 */
+.news-item.expanded-card .summary {
     -webkit-line-clamp: unset;
-    max-height: none;
-    overflow: visible; /* 모든 내용 보이도록 */
-    height: auto;
+    max-height: 1000px;
 }
 
 .news-item .toggle-summary-btn {
     background: none;
     border: none;
-    color: #007bff;
+    color: var(--primary-color);
     cursor: pointer;
-    padding: 0.1rem 0;
+    padding: var(--spacing-xs) 0;
     font-size: 0.8rem;
     font-weight: bold;
-    text-decoration: underline;
     align-self: flex-start;
-    margin-bottom: 0.3rem; /* 메타 정보와의 간격 */
-}
-.news-item .toggle-summary-btn:hover {
-    color: #0056b3;
+    margin-bottom: var(--spacing-sm);
 }
 
 .news-item .meta {
-    font-size: 0.7rem;
-    color: #6c757d;
-    margin-bottom: 0.3rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 0.8rem;
+    color: var(--text-tertiary-color);
+    margin-bottom: var(--spacing-sm);
 }
 
 .news-item .keywords {
-    /* margin-bottom: 0.1rem; 이전 값, original-link와 간격 고려 */
     display: flex;
     flex-wrap: wrap;
-    gap: 0.2rem;
-    line-height: 1.4; /* 키워드 태그 자체의 높이 확보 */
-    /* 키워드 영역의 최대 높이를 1줄 또는 2줄로 제한하여 공간 확보 */
-    max-height: calc(0.7rem * 1.4 + 0.2rem + 2px); /* 1줄 기준: (font-size * line-height) + gap + 약간의 버퍼 */
-                                                 /* 또는 2줄로 하려면: calc((0.7rem * 1.4 * 2) + 0.2rem + 2px) */
-    overflow: hidden; /* 넘치는 키워드 숨김 (잘림 방지) */
-    margin-bottom: 0.3rem; /* 원문 링크와의 간격 */
+    gap: var(--spacing-xs) var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    max-height: calc((0.75rem * 1.4 * 2) + var(--spacing-xs));
+    overflow: hidden;
 }
-
 .news-item.expanded-card .keywords {
     max-height: none;
-    overflow: visible;
 }
-
 .news-item .keywords span {
-    font-size: 0.7rem; /* CSS 변수 사용 고려 */
-    padding: 0.15rem 0.4rem;
-    background-color: #e9ecef;
-    color: #495057;
-    border-radius: 10px;
-    display: inline-block; /* line-height 적용 위해 */
+    font-size: 0.75rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--bg-tertiary-color);
+    color: var(--text-secondary-color);
+    border-radius: var(--border-radius-lg);
     cursor: pointer;
-    transition: background-color 0.2s ease;
-    /* line-height: 1; span 내부 line-height 초기화 (선택) */
+    transition: var(--transition-fast);
 }
 .news-item .keywords span:hover {
-    background-color: #007bff;
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--text-on-primary-color);
+    transform: translateY(-1px);
 }
 
 .news-item .original-link {
     display: block;
-    margin-top: auto; /* 항상 카드 하단에 배치 */
+    margin-top: auto;
     text-decoration: none;
-    color: #007bff;
-    font-weight: bold;
-    font-size: 0.75rem;
+    color: var(--text-tertiary-color);
+    font-weight: 600;
+    font-size: 0.8rem;
     text-align: right;
     cursor: pointer;
-    padding-top: 0.2rem; /* 키워드와의 최소 간격 */
+    padding-top: var(--spacing-sm);
+    transition: color 0.2s ease;
 }
 .news-item .original-link:hover {
+    color: var(--primary-color);
     text-decoration: underline;
 }
-.category-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #e9ecef;
-}
 
-.category-btn {
-    padding: 0.4rem 0.9rem;
-    font-size: 0.85rem;
-    border: 1px solid #dee2e6;
-    border-radius: 16px;
-    background-color: #fff;
-    color: #495057;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    outline: none;
+/* ---------------------------------- */
+/* 4. Skeleton Loading (스켈레톤 로딩) */
+/* ---------------------------------- */
+@keyframes skeleton-wave {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
+.skeleton-card {
+    background-color: var(--bg-secondary-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: 0 4px 20px var(--shadow-color-light);
+}
+.skeleton-item {
+    background: linear-gradient(90deg, var(--bg-tertiary-color) 25%, var(--border-color) 50%, var(--bg-tertiary-color) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-wave 1.5s infinite linear;
+    border-radius: var(--border-radius-sm);
+}
+.skeleton-image { height: 160px; margin-bottom: var(--spacing-md); }
+.skeleton-title { height: 24px; width: 80%; margin-bottom: var(--spacing-sm); }
+.skeleton-text { height: 16px; width: 100%; margin-bottom: var(--spacing-xs); }
+.skeleton-text:last-child { width: 70%; }
 
-.category-btn:hover {
-    background-color: #e9ecef;
-    border-color: #adb5bd;
-}
-
-.category-btn.active {
-    background-color: #007bff;
-    color: white;
-    border-color: #007bff;
-    font-weight: 600;
-}
-.empty-message {
-    text-align: center;
-    padding: 2rem;
-    color: #6c757d;
-    font-style: italic;
-}
-
-/* Load More Button ... (이하 동일) ... */
+/* ---------------------------------- */
+/* 5. Etc (기타 요소)                   */
+/* ---------------------------------- */
 #load-more-btn {
     display: block;
     width: 100%;
-    margin: 2rem 0 0;
-    padding: 0.8rem 1.5rem;
-    background-color: #28a745;
-    color: white;
+    margin: var(--spacing-lg) 0 0;
+    padding: 0.9rem 1.5rem;
+    background-color: var(--secondary-color);
+    color: var(--text-on-primary-color);
     border: none;
-    border-radius: 4px;
+    border-radius: var(--border-radius-md);
     font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: var(--transition-fast);
 }
 #load-more-btn:hover {
-    background-color: #218838;
+    background-color: var(--secondary-hover-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px color-mix(in srgb, var(--secondary-color) 30%, transparent);
+}
+.empty-message {
+    grid-column: 1 / -1; /* 그리드 전체 영역 차지 */
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-tertiary-color);
+    font-style: italic;
+    background-color: var(--bg-secondary-color);
+    border-radius: var(--border-radius-lg);
 }
 
-/* Popular Topics ... (이하 동일) ... */
-.popular-topics {
-    flex: 1;
-    background: #fff;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    align-self: flex-start;
-}
-
-.popular-topics h3 {
-    font-size: 1.2rem;
-    color: #333;
-    margin-top: 0;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.popular-topics ul {
-    list-style: none;
-    padding: 0;
-}
-
-.popular-topics li a {
-    text-decoration: none;
-    color: #007bff;
-    display: block;
-    padding: 0.6rem 0;
-    border-bottom: 1px dashed #e9ecef;
-    font-size: 0.9rem;
-    transition: color 0.2s ease, background-color 0.2s ease, padding-left 0.2s ease;
-}
-.popular-topics li:last-child a {
-    border-bottom: none;
-}
-.popular-topics li a:hover {
-    color: #0056b3;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    padding-left: 0.5rem;
-}
-
-/* Modal Styles ... (이하 동일) ... */
 .modal {
     display: none;
     position: fixed;
@@ -435,157 +464,67 @@ main {
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.6);
-    padding-top: 30px;
+    background-color: rgba(0,0,0,0.7);
+    animation: fadeIn 0.3s ease;
 }
-
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .modal-content {
-    background-color: #fefefe;
-    margin: auto;
-    padding: 20px;
-    border: 1px solid #888;
+    background-color: var(--bg-color);
+    margin: 30px auto;
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
     width: 90%;
     max-width: 900px;
     height: calc(100% - 60px);
-    border-radius: 8px;
+    border-radius: var(--border-radius-lg);
     position: relative;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 15px 30px var(--shadow-color-dark);
 }
-
 .close-modal-btn {
-    color: #aaa;
+    color: var(--text-tertiary-color);
     position: absolute;
-    top: 10px;
-    right: 20px;
-    font-size: 28px;
+    top: 15px;
+    right: 25px;
+    font-size: 32px;
     font-weight: bold;
     cursor: pointer;
-    line-height: 1;
+    transition: color 0.2s ease;
 }
-.close-modal-btn:hover,
-.close-modal-btn:focus {
-    color: black;
-    text-decoration: none;
-}
-
+.close-modal-btn:hover { color: var(--text-primary-color); }
 #modal-iframe {
     width: 100%;
     height: 100%;
     border: none;
     flex-grow: 1;
+    border-radius: var(--border-radius-md);
+    margin-top: 30px;
 }
 
-/* Footer ... (이하 동일) ... */
 footer {
     text-align: center;
     padding: 1.5rem;
-    background: #343a40;
-    color: #adb5bd;
+    background: var(--bg-secondary-color);
+    border-top: 1px solid var(--border-color);
+    color: var(--text-tertiary-color);
     margin-top: auto;
     font-size: 0.9rem;
 }
 
-/* Responsive adjustments ... (이하 동일) ... */
+/* ---------------------------------- */
+/* 6. Responsive (반응형)                */
+/* ---------------------------------- */
 @media (max-width: 992px) {
-    .news-list-container {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    main {
-        flex-direction: column;
-    }
-    .news-area, .popular-topics {
-        flex: none;
-        width: 100%;
-    }
-    .popular-topics {
-        margin-top: 20px;
-    }
+    .news-list-container { grid-template-columns: repeat(2, 1fr); }
+    main { flex-direction: column; }
 }
-
 @media (max-width: 768px) {
-    header {
-        padding: 1rem;
-    }
-    .news-list-container {
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 1rem;
-    }
-    .news-item {
-        padding: 0.8rem;
-        min-height: 220px;
-    }
-    .news-item h2 {
-        font-size: 1rem;
-        /* 모바일에서는 제목 줄 수 조절 가능 */
-        /* -webkit-line-clamp: 3; */
-    }
-    .news-item .summary {
-        font-size: 0.8rem;
-        -webkit-line-clamp: 3; /* 모바일 기본 3줄 */
-    }
-    .news-item .summary.summary-shorten {
-        -webkit-line-clamp: 2; /* 모바일 제목 길 때 2줄 */
-    }
-    .modal-content {
-        width: 95%;
-        height: calc(100% - 40px);
-        padding: 15px;
-    }
-    .close-modal-btn {
-        top: 8px;
-        right: 15px;
-        font-size: 24px;
-    }
-    .category-filters {
-        gap: 0.5rem;
-        justify-content: center; /* 작은 화면에서 버튼 중앙 정렬 */
-    }
-    .category-btn {
-        padding: 0.3rem 0.7rem;
-        font-size: 0.8rem;
-    }
+    header { padding: 1rem; }
+    .news-list-container { grid-template-columns: 1fr; gap: var(--spacing-md); }
 }
-
 @media (max-width: 480px) {
-    header {
-        flex-direction: column;
-        gap: 0.5rem;
-        padding: 0.8rem;
-    }
-    header h1 {
-        font-size: 1.5rem;
-    }
-    header nav {
-        margin-top: 0.5rem;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
-    header nav div {
-        display: flex !important;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-
-    .news-list-container {
-        grid-template-columns: 1fr;
-    }
-    .news-item {
-        min-height: 200px;
-    }
-    .news-item .keywords span {
-        font-size: 0.65rem;
-    }
-    .modal-content {
-        padding: 10px;
-        height: calc(100% - 20px);
-    }
-    .close-modal-btn {
-        top: 5px;
-        right: 10px;
-    }
+    header { flex-direction: column; gap: 0.8rem; padding: 0.8rem; }
+    header h1 a { font-size: 1.5rem; }
+    header nav { width: 100%; justify-content: center; }
 }
