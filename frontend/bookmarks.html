@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Widget</title>
+    <title>저장한 뉴스 - Daily Widget</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -11,12 +11,10 @@
     <header>
         <h1><a href="index.html">Daily Widget</a></h1>
         <nav>
-            <!-- 비로그인 시 보여줄 내용 -->
             <div id="auth-links-logged-out" style="display: none;">
                 <a href="login.html"><button>로그인</button></a>
                 <a href="register.html"><button>회원가입</button></a>
             </div>
-            <!-- 로그인 시 보여줄 내용 -->
             <div id="auth-links-logged-in" style="display: none;">
                 <span id="user-greeting-main"></span>
                 <a href="my_keywords.html"><button class="btn-secondary">관심 키워드</button></a>
@@ -25,13 +23,11 @@
         </nav>
     </header>
 
-    <!-- 새로운 대시보드 레이아웃 -->
     <div class="dashboard-layout">
-        <!-- (좌측) GNB (Global Navigation Bar) -->
         <nav class="gnb">
             <ul>
                 <li>
-                    <a href="index.html" class="gnb-item active" title="뉴스 피드">
+                    <a href="index.html" class="gnb-item" title="뉴스 피드">
                         <i class="icon-feed"></i>
                         <span class="gnb-tooltip">뉴스 피드</span>
                     </a>
@@ -43,7 +39,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="bookmarks.html" class="gnb-item" title="저장한 뉴스">
+                    <a href="bookmarks.html" class="gnb-item active" title="저장한 뉴스">
                         <i class="icon-saved"></i>
                         <span class="gnb-tooltip">저장한 뉴스</span>
                     </a>
@@ -58,49 +54,20 @@
             </ul>
         </nav>
 
-        <!-- (중앙) 메인 콘텐츠 영역 -->
         <main class="main-content">
             <section class="news-area">
-                <h2 id="news-section-title">최신 뉴스</h2>
-                <div class="category-filters">
-                    <button class="category-btn active" data-category="">전체</button>
-                    <button class="category-btn" data-category="정치">정치</button>
-                    <button class="category-btn" data-category="경제">경제</button>
-                    <button class="category-btn" data-category="사회">사회</button>
-                    <button class="category-btn" data-category="IT/과학">IT/과학</button>
-                    <button class="category-btn" data-category="생활/문화">생활/문화</button>
-                    <button class="category-btn" data-category="스포츠">스포츠</button>
-                    <button class="category-btn" data-category="국제">국제</button>
-                    <button class="category-btn" data-category="기타">기타</button>
-                </div>
-                <div class="filter-controls">
-                    <input type="text" id="search-keyword" placeholder="키워드 검색...">
-                </div>
+                <h2 id="news-section-title">🔖 저장한 뉴스</h2>
                 <div id="news-list-container" class="news-list-container">
-                    <!-- 뉴스 아이템들이 여기에 동적으로 추가됩니다. -->
+                    <!-- 저장된 뉴스 아이템들이 여기에 동적으로 추가됩니다. -->
                 </div>
                 <button id="load-more-btn" style="display: none;">더 보기</button>
             </section>
         </main>
-
-        <!-- (우측) 인사이트/탐색 패널 -->
-        <aside class="insight-panel">
-            <div class="insight-widget">
-                <h3>🔥 실시간 인기 토픽</h3>
-                <ul id="popular-topics-list">
-                    <!-- JS로 동적 생성될 인기 토픽 리스트 -->
-                </ul>
-            </div>
-            <div class="insight-widget">
-                <h3>💡 추천 키워드</h3>
-                <div id="recommended-keywords" class="keyword-cloud">
-                    <!-- JS로 동적 생성될 키워드 클라우드 -->
-                </div>
-            </div>
-        </aside>
+        
+        <!-- 북마크 페이지에서는 인사이트 패널을 숨깁니다. -->
+        <aside class="insight-panel" style="display: none;"></aside>
     </div>
 
-    <!-- 모달과 푸터는 dashboard-layout 바깥에 위치 -->
     <div id="news-modal" class="modal">
         <div class="modal-content">
             <span class="close-modal-btn">×</span>
@@ -112,6 +79,6 @@
     </footer>
 
     <script src="js/auth.js"></script>
-    <script src="js/script.js"></script>
+    <script src="js/bookmarks.js"></script> <!-- 이 페이지 전용 JS 파일 -->
 </body>
 </html>
