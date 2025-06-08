@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     console.log('my_keywords.js 스크립트 시작!');
 
+    // --- DOM 요소 및 변수 ---
     const keywordOptionsArea = document.getElementById('keyword-options-area');
     const customKeywordInput = document.getElementById('custom-keyword-input');
     const addKeywordBtn = document.getElementById('add-keyword-btn');
@@ -11,25 +12,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveKeywordsBtn = document.getElementById('save-keywords-btn');
     const messageArea = document.getElementById('message-area');
     const API_BASE_URL = 'http://localhost:5001/api';
+    const token = localStorage.getItem('authToken');
 
     let selectedKeywords = [];
     const MAX_KEYWORDS = 5;
-    const predefinedKeywords = ["정치", "경제", "사회", "IT/과학", "생활/문화", "스포츠", "문화", "국제"];
+    const predefinedKeywords = ["AI", "기술", "건강", "경제", "우주", "환경", "문화", "교육", "스포츠", "여행", "패션", "음식"];
+
+    // --- 기능 함수 ---
+
+    function renderAll() {
+        renderPredefinedKeywords();
+        renderSelectedKeywords();
+    }
 
     function renderPredefinedKeywords() {
-        if (!keywordOptionsArea) {
-            console.error("'keyword-options-area' 요소를 찾을 수 없습니다.");
-            return;
-        }
+        if (!keywordOptionsArea) return;
         keywordOptionsArea.innerHTML = '';
         predefinedKeywords.forEach(keyword => {
             const button = document.createElement('button');
             button.className = 'keyword-btn';
             button.textContent = `#${keyword}`;
             button.dataset.keyword = keyword;
-            if (selectedKeywords.includes(keyword)) {
-                button.classList.add('selected');
-            }
+            button.classList.toggle('selected', selectedKeywords.includes(keyword));
             button.addEventListener('click', () => toggleKeywordSelection(keyword));
             keywordOptionsArea.appendChild(button);
         });
@@ -45,77 +49,73 @@ document.addEventListener('DOMContentLoaded', () => {
             const removeBtn = document.createElement('button');
             removeBtn.className = 'remove-keyword-btn';
             removeBtn.innerHTML = '×';
-            removeBtn.title = `${keyword} 삭제`;
             removeBtn.addEventListener('click', () => removeKeyword(keyword));
             tag.appendChild(removeBtn);
             selectedKeywordsDisplay.appendChild(tag);
         });
     }
 
-    function updateAllKeywordButtons() {
-        const buttons = document.querySelectorAll('.keyword-btn');
-        buttons.forEach(btn => {
-            btn.classList.toggle('selected', selectedKeywords.includes(btn.dataset.keyword));
-        });
-    }
-    
     function toggleKeywordSelection(keyword) {
         const index = selectedKeywords.indexOf(keyword);
         if (index > -1) {
             selectedKeywords.splice(index, 1);
         } else {
             if (selectedKeywords.length >= MAX_KEYWORDS) {
-                return showMessage(`최대 ${MAX_KEYWORDS}개의 키워드만 선택할 수 있습니다.`, 'error');
+                return showMessage(`최대 ${MAX_KEYWORDS}개만 선택 가능합니다.`, 'error');
             }
             selectedKeywords.push(keyword);
         }
-        renderSelectedKeywords();
-        updateAllKeywordButtons();
+        renderAll();
     }
-    
+
     function addCustomKeyword() {
-        if (!customKeywordInput) return;
         const keyword = customKeywordInput.value.trim();
-        if (keyword) {
-            if (selectedKeywords.includes(keyword)) {
-                showMessage('이미 선택된 키워드입니다.', 'error');
-            } else if (selectedKeywords.length >= MAX_KEYWORDS) {
-                showMessage(`최대 ${MAX_KEYWORDS}개의 키워드만 선택할 수 있습니다.`, 'error');
-            } else {
-                selectedKeywords.push(keyword);
-                renderSelectedKeywords();
-                updateAllKeywordButtons();
-            }
-            customKeywordInput.value = '';
+        if (!keyword) return;
+        if (selectedKeywords.includes(keyword)) {
+            return showMessage('이미 선택된 키워드입니다.', 'error');
         }
+        if (selectedKeywords.length >= MAX_KEYWORDS) {
+            return showMessage(`최대 ${MAX_KEYWORDS}개만 선택 가능합니다.`, 'error');
+        }
+        selectedKeywords.push(keyword);
+        customKeywordInput.value = '';
+        renderAll();
     }
 
     function removeKeyword(keywordToRemove) {
         selectedKeywords = selectedKeywords.filter(k => k !== keywordToRemove);
-        renderSelectedKeywords();
-        updateAllKeywordButtons();
+        renderAll();
     }
 
     async function loadUserInterests() {
-        const token = localStorage.getItem('authToken');
         if (!token) return;
         try {
-            const response = await fetch(`${API_BASE_URL}/users/me/interests`, { headers: { 'Authorization': `Bearer ${token}` } });
+            console.log('서버에 관심사 조회를 요청합니다...');
+            const response = await fetch(`${API_BASE_URL}/users/me/interests`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error(`서버 응답 오류: ${response.status}`);
+            
             const data = await response.json();
+            console.log('서버로부터 받은 데이터:', data);
+
             if (data.success && Array.isArray(data.interests)) {
-                selectedKeywords = [...data.interests];
-                localStorage.setItem('userInterests', JSON.stringify(selectedKeywords));
+                // ★ 서버에서 받은 데이터로 selectedKeywords 배열을 교체
+                selectedKeywords = data.interests;
+                console.log('selectedKeywords 배열이 업데이트되었습니다:', selectedKeywords);
+            } else {
+                console.warn('관심사 데이터가 올바른 형식이 아닙니다.');
+                selectedKeywords = [];
             }
         } catch (error) {
-            console.error('관심사 로드 오류:', error);
+            console.error('관심사 로드 중 오류 발생:', error);
             showMessage('관심사를 불러오는 중 오류가 발생했습니다.', 'error');
+            selectedKeywords = [];
         }
     }
 
     async function saveUserInterests() {
-        const token = localStorage.getItem('authToken');
         if (!token) return showMessage('로그인이 필요합니다.', 'error');
-        
         try {
             const response = await fetch(`${API_BASE_URL}/users/me/interests`, {
                 method: 'PUT',
@@ -126,11 +126,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.success) {
                 showMessage(data.message || '관심 키워드가 저장되었습니다.', 'success');
                 localStorage.setItem('userInterests', JSON.stringify(data.interests || selectedKeywords));
+                localStorage.setItem('interestsUpdated', 'true');
             } else {
                 showMessage(data.message || '저장에 실패했습니다.', 'error');
             }
         } catch (error) {
-            console.error('관심사 저장 오류:', error);
             showMessage('저장 중 오류가 발생했습니다.', 'error');
         }
     }
@@ -141,28 +141,23 @@ document.addEventListener('DOMContentLoaded', () => {
         messageArea.className = `message-area ${type}`;
         messageArea.style.display = 'block';
         setTimeout(() => {
-            if (messageArea.textContent === message) {
-                messageArea.style.display = 'none';
-            }
+            if (area.textContent === message) area.style.display = 'none';
         }, 3000);
     }
     
     async function initializePage() {
-        console.log("my_keywords.js: 페이지 초기화 시작");
-        await loadUserInterests();
-        renderPredefinedKeywords();
-        renderSelectedKeywords();
+        console.log("페이지 초기화 시작");
+        await loadUserInterests(); // 데이터 로드를 완전히 기다림
+        renderAll(); //  로드된 데이터로 모든 UI를 한번에 그림
         if (typeof updateHeaderUI === 'function') updateHeaderUI();
-        console.log("my_keywords.js: 페이지 초기화 완료");
+        console.log("페이지 초기화 완료");
     }
 
-    if (addKeywordBtn && customKeywordInput) {
-        addKeywordBtn.addEventListener('click', addCustomKeyword);
-        customKeywordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomKeyword(); } });
-    }
-    if (saveKeywordsBtn) {
-        saveKeywordsBtn.addEventListener('click', saveUserInterests);
-    }
+    // --- 이벤트 리스너 ---
+    addKeywordBtn.addEventListener('click', addCustomKeyword);
+    customKeywordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomKeyword(); } });
+    saveKeywordsBtn.addEventListener('click', saveUserInterests);
     
+    // --- 초기화 실행 ---
     initializePage();
 });

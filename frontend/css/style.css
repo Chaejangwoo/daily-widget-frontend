@@ -426,6 +426,10 @@ header nav #user-greeting-main, header nav #user-greeting {
     background-color: var(--bg-secondary-color);
     border-radius: var(--border-radius-lg);
 }
+
+/* ---  Modal Styles --- */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
 .modal {
     display: none;
     position: fixed;
@@ -436,22 +440,25 @@ header nav #user-greeting-main, header nav #user-greeting {
     height: 100%;
     background-color: rgba(0,0,0,0.7);
     animation: fadeIn 0.3s ease;
+    padding: 30px; /* 상하좌우 여백 */
 }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
 .modal-content {
     background-color: var(--bg-color);
-    margin: 30px auto;
-    padding: var(--spacing-md);
+    margin: auto;
+    padding: var(--spacing-lg);
     border: 1px solid var(--border-color);
-    width: 90%;
-    max-width: 900px;
-    height: calc(100% - 60px);
+    width: 100%; /* 부모(modal)의 padding을 제외한 전체 너비 */
+    max-width: 1400px;
+    height: 100%; /* 부모(modal)의 padding을 제외한 전체 높이 */
     border-radius: var(--border-radius-lg);
     position: relative;
-    display: flex;
-    flex-direction: column;
     box-shadow: 0 15px 30px var(--shadow-color-dark);
+    display: flex;
+    flex-direction: row; /* 가로 배치 */
+    gap: var(--spacing-lg);
 }
+
 .close-modal-btn {
     color: var(--text-tertiary-color);
     position: absolute;
@@ -461,15 +468,84 @@ header nav #user-greeting-main, header nav #user-greeting {
     font-weight: bold;
     cursor: pointer;
     transition: color 0.2s ease;
+    z-index: 10;
 }
 .close-modal-btn:hover { color: var(--text-primary-color); }
+
 #modal-iframe {
+    flex: 3;
+    width: 0;
+    height: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    margin: 0;
+}
+
+.related-news-container {
+    flex: 1;
+    min-width: 300px;
+    height: 100%;
+    overflow-y: auto;
+    padding-right: var(--spacing-sm);
+}
+
+.related-news-container h4 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.related-news-container ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.related-news-container ul li a {
+    display: flex;
+    gap: var(--spacing-sm);
+    text-decoration: none;
+    color: var(--text-primary-color);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-sm);
+    transition: background-color 0.2s ease;
+}
+.related-news-container ul li a:hover {
+    background-color: var(--bg-tertiary-color);
+}
+
+.related-news-img {
+    width: 80px;
+    height: 60px;
+    flex-shrink: 0;
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+    background-color: var(--bg-tertiary-color);
+}
+
+.related-news-img img {
     width: 100%;
     height: 100%;
-    border: none;
-    flex-grow: 1;
-    border-radius: var(--border-radius-md);
-    margin-top: 30px;
+    object-fit: cover;
+}
+
+.related-news-info h5 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-xs);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.related-news-info span {
+    font-size: 0.8rem;
+    color: var(--text-tertiary-color);
 }
 footer {
     text-align: center;
@@ -605,7 +681,15 @@ footer {
     transition: var(--transition-fast);
 }
 .keyword-cloud span:hover { background-color: var(--primary-color); color: var(--text-on-primary-color); transform: translateY(-2px); }
-
+.keyword-cloud .no-recommendation {
+    font-size: 0.85rem;
+    color: var(--text-tertiary-color);
+    text-align: center;
+    width: 100%;
+    padding: var(--spacing-md) 0;
+    cursor: default;
+    line-height: 1.5;
+}
 /* ---------------------------------- */
 /* 7. Responsive (반응형)                */
 /* ---------------------------------- */

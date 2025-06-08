@@ -1,66 +1,44 @@
 // backend/controllers/newsController.js
 
-// UserBookmark 모델을 추가로 불러옵니다.
-const { NewsArticle, Summary, Keyword, UserBookmark, sequelize } = require('../models');
-const { Op } = require('sequelize');
+// 필요한 모든 모델과 Sequelize 관련 모듈을 불러옵니다.
+const { NewsArticle, Summary, Keyword, UserBookmark, sequelize, Sequelize } = require('../models');
+const { Op } = Sequelize;
+const { cosineSimilarity } = require('../utils/vectorUtils');
 
+/**
+ * 뉴스 목록을 조회하는 메인 API 컨트롤러
+ * - 페이징, 필터링(키워드, 카테고리, 출처), 정렬(관심사, 날짜) 지원
+ * - 로그인 사용자의 북마크 여부 포함
+ */
 const getAllNews = async (req, res) => {
-    // --- Phase 1: 파라미터 및 인증 정보 처리 ---
-    console.log('[Backend] getAllNews 호출됨. Query:', req.query);
-    
-    // req.user가 존재할 수 있으므로, 로그인한 사용자의 ID를 가져옵니다. (없으면 null)
-    // authMiddleware가 선택적으로 적용될 경우를 대비한 안전한 코드입니다.
     const userId = req.user ? req.user.id : null;
-    console.log(`[Backend] 현재 사용자 ID: ${userId}`);
+    console.log(`[Backend] getAllNews 호출됨. 사용자 ID: ${userId}, Query:`, req.query);
 
     try {
         let { page, limit, sortBy, sortOrder, keyword, sourceName, category, user_interests } = req.query;
-
         page = parseInt(page, 10) || 1;
         limit = parseInt(limit, 10) || 9;
         const offset = (page - 1) * limit;
 
-        let effectiveSortBy = sortBy || 'publishedDate';
-        let effectiveSortOrder = sortOrder === 'ASC' ? 'ASC' : 'DESC';
-
-        // --- Phase 2: 검색 및 필터링 조건(whereClause) 생성 ---
+        // --- WHERE 절 생성 ---
         const whereClause = {};
+        if (sourceName) whereClause.sourceName = sourceName;
+        if (category && category.trim() !== '' && category.toLowerCase() !== 'all') {
+            whereClause.category = category;
+        }
+
         if (keyword) {
-            console.log('[Backend] 확장된 검색어 처리:', keyword);
-            
-            // ★★★ 여기가 핵심 수정 부분입니다 ★★★
             whereClause[Op.or] = [
-                // 1. 제목(title)에 키워드가 포함된 경우
                 { title: { [Op.like]: `%${keyword}%` } },
-                
-                // 2. 내용(content)에 키워드가 포함된 경우 (기존 로직)
                 { content: { [Op.like]: `%${keyword}%` } },
-                
-                // 3. 카테고리(category)가 키워드와 일치하는 경우
-                { category: { [Op.eq]: keyword } }, // Op.eq는 정확한 일치
-                
-                // 4. Keyword 테이블에 해당 키워드가 있는 경우 (Sequelize의 Association 검색)
-                // 모델 관계 설정에 정의된 'as' 값을 사용해야 합니다. (예: 'aiKeywords')
-                { '$aiKeywords.keywordText$': { [Op.eq]: keyword } }
+                { category: { [Op.eq]: keyword } },
+                Sequelize.literal(`EXISTS (SELECT 1 FROM Keywords WHERE Keywords.articleId = NewsArticle.id AND Keywords.keywordText = ${sequelize.escape(keyword)})`)
             ];
         }
-        if (category && category.trim() !== '' && category.toLowerCase() !== 'all') {
-            whereClause.category = category;
-        }
-        if (sourceName) {
-            console.log('[Backend] 출처 필터링:', sourceName);
-            whereClause.sourceName = sourceName;
-        }
-        if (category && category.trim() !== '' && category.toLowerCase() !== 'all') {
-            console.log('[Backend] 카테고리 필터링:', category);
-            whereClause.category = category;
-        }
-
-        // --- Phase 3: 정렬 조건(orderClause) 생성 ---
-        let orderClause = [[effectiveSortBy, effectiveSortOrder]];
-
-        // 사용자 관심사 기반 정렬 로직 (기존 로직 유지)
-        if (user_interests && !keyword && (!category || category.trim() === '' || category.toLowerCase() === 'all')) {
+        
+        // --- ORDER 절 생성 ---
+        let orderClause = [[sortBy || 'publishedDate', sortOrder === 'ASC' ? 'ASC' : 'DESC']];
+        if (user_interests && !keyword && !category) {
             const interestsArray = user_interests.split(',').map(interest => interest.trim()).filter(i => i);
             if (interestsArray.length > 0) {
                 const relevanceScoreSQL = interestsArray.map(interest => 
@@ -74,87 +52,47 @@ const getAllNews = async (req, res) => {
                 if (relevanceScoreSQL) {
                     orderClause = [
                         [sequelize.literal(`(${relevanceScoreSQL})`), 'DESC'],
-                        [effectiveSortBy, effectiveSortOrder]
+                        [sortBy || 'publishedDate', sortOrder === 'ASC' ? 'ASC' : 'DESC']
                     ];
-                    console.log('[Backend] 관심사 기반 정렬 로직 적용됨.');
                 }
             }
         }
 
-        // --- Phase 4: 데이터베이스 조회 (Sequelize) ---
-        console.log('[Backend] 최종 whereClause:', JSON.stringify(whereClause, null, 2));
-        console.log('[Backend] 최종 orderClause:', orderClause.map(o => o.map(oi => typeof oi === 'string' ? oi : '[SequelizeLiteral]').join(' ')).join(', '));
-
+        // --- 데이터베이스 조회 ---
         const { count, rows } = await NewsArticle.findAndCountAll({
             where: whereClause,
             limit: limit,
             offset: offset,
             order: orderClause,
-            // 북마크 여부를 확인하는 로직을 attributes에 추가합니다.
             attributes: {
                 include: [
-                    [
-                        // userId가 있을 경우에만 북마크 여부를 확인하는 서브쿼리 실행
-                        sequelize.literal(
-                            `(EXISTS (SELECT 1 FROM UserBookmarks WHERE UserBookmarks.articleId = NewsArticle.id AND UserBookmarks.userId = ${userId ? sequelize.escape(userId) : 'NULL'}))`
-                        ),
-                        'isBookmarked'
-                    ]
+                    [ sequelize.literal(`(EXISTS (SELECT 1 FROM UserBookmarks WHERE UserBookmarks.articleId = NewsArticle.id AND UserBookmarks.userId = ${userId ? sequelize.escape(userId) : 'NULL'}))`), 'isBookmarked' ]
                 ]
             },
             include: [
-                {
-                    model: Summary,
-                    as: 'aiSummary', // 모델 관계 설정(as)에 따라 수정 필요
-                    attributes: ['summaryText'],
-                    required: false // LEFT JOIN
-                },
-                {
-                    model: Keyword,
-                    as: 'aiKeywords', // 모델 관계 설정(as)에 따라 수정 필요
-                    attributes: ['keywordText'],
-                    required: false // LEFT JOIN
-                }
+                { model: Summary, as: 'aiSummary', attributes: ['summaryText'], required: false },
+                { model: Keyword, as: 'aiKeywords', attributes: ['keywordText'], required: false }
             ],
             distinct: true
         });
 
-        console.log(`[Backend] DB 조회 결과: ${rows.length}개 뉴스 반환, 총 ${count}개`);
-
-        // --- Phase 5: 프론트엔드에 맞게 데이터 가공 ---
+        // --- 데이터 가공 및 응답 ---
         const newsWithProcessedData = rows.map(articleInstance => {
             const article = articleInstance.get({ plain: true });
-
-            // 요약 처리 (기존 로직 유지)
-            let displaySummary = '요약 정보가 준비 중입니다.';
-            if (article.aiSummary && article.aiSummary.summaryText) {
-                displaySummary = article.aiSummary.summaryText;
-            } else if (article.content) {
-                const snippetLength = article.title && article.title.length > 50 ? 150 : 200;
-                displaySummary = article.content.substring(0, snippetLength) + (article.content.length > snippetLength ? '...' : '');
-            }
-
-            // 키워드 처리 (기존 로직 유지)
-            const displayKeywords = article.aiKeywords ? article.aiKeywords.map(kw => kw.keywordText) : [];
-
             return {
                 id: article.id,
                 title: article.title,
-                summaryForDisplay: displaySummary,
+                summaryForDisplay: article.aiSummary?.summaryText || '',
                 publishedDate: article.publishedDate,
                 sourceName: article.sourceName,
                 originalUrl: article.originalUrl,
                 imageUrl: article.imageUrl,
-                keywordsForDisplay: displayKeywords,
+                keywordsForDisplay: article.aiKeywords?.map(kw => kw.keywordText) || [],
                 category: article.category,
-                // 북마크 여부 추가 (0 또는 1을 boolean으로 변환)
                 isBookmarked: !!article.isBookmarked,
-                createdAt: article.createdAt,
-                updatedAt: article.updatedAt
             };
         });
-
-        // --- Phase 6: 최종 응답 전송 ---
+        
         res.status(200).json({
             totalPages: Math.ceil(count / limit),
             currentPage: page,
@@ -164,10 +102,64 @@ const getAllNews = async (req, res) => {
 
     } catch (error) {
         console.error('[Backend] 뉴스 목록 조회 API 오류:', error);
-        res.status(500).json({ message: '서버 오류로 뉴스 목록을 가져오는데 실패했습니다.', error: error.message });
+        res.status(500).json({ message: '서버 오류', error: error.message });
+    }
+};
+
+/**
+ * 특정 뉴스와 관련된 다른 뉴스들을 추천하는 컨트롤러
+ * - 벡터 임베딩과 코사인 유사도 기반
+ */
+const getRelatedNews = async (req, res) => {
+    const { articleId } = req.params;
+
+    try {
+        const targetArticle = await NewsArticle.findByPk(articleId, {
+            attributes: ['id', 'embeddingVector']
+        });
+
+        if (!targetArticle || !targetArticle.embeddingVector) {
+            return res.status(200).json({ success: true, relatedNews: [] });
+        }
+        const targetVector = JSON.parse(targetArticle.embeddingVector);
+
+        const candidateArticles = await NewsArticle.findAll({
+            where: {
+                id: { [Op.ne]: articleId },
+                embeddingVector: { [Op.ne]: null }
+            },
+            attributes: ['id', 'title', 'imageUrl', 'sourceName', 'originalUrl', 'embeddingVector'],
+            order: [['publishedDate', 'DESC']],
+            limit: 500
+        });
+
+        const similarities = candidateArticles.map(article => {
+            const candidateVector = JSON.parse(article.embeddingVector);
+            const similarity = cosineSimilarity(targetVector, candidateVector);
+            return {
+                id: article.id,
+                title: article.title,
+                imageUrl: article.imageUrl,
+                sourceName: article.sourceName,
+                originalUrl: article.originalUrl,
+                similarity: similarity
+            };
+        });
+
+        const relatedNews = similarities
+            .filter(item => item.similarity > 0.7)
+            .sort((a, b) => b.similarity - a.similarity)
+            .slice(0, 5);
+
+        res.status(200).json({ success: true, relatedNews });
+
+    } catch (error) {
+        console.error('관련 뉴스 추천 중 오류:', error);
+        res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' });
     }
 };
 
 module.exports = {
     getAllNews,
+    getRelatedNews
 };

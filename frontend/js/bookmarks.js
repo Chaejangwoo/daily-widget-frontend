@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`${API_BASE_URL}/me/bookmarks?page=${currentPage}&limit=${itemsPerPage}`, {
+            const response = await fetch(`${API_BASE_URL}/users/me/bookmarks?page=${currentPage}&limit=${itemsPerPage}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);

@@ -10,7 +10,7 @@ const { optionalProtect } = require('../middleware/optionalAuthMiddleware'); // 
 // --- 뉴스 라우트 ---
 // GET /api/news : 선택적 인증 적용
 router.get('/', optionalProtect, newsController.getAllNews);
-
+router.get('/:articleId/related', newsController.getRelatedNews);
 // --- 북마크 라우트 ---
 // POST /api/news/:articleId/bookmark : 필수 인증 적용
 router.post('/:articleId/bookmark', protect, bookmarkController.toggleBookmark);

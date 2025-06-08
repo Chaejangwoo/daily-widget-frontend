@@ -76,7 +76,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0, // 기본값을 0으로 설정
-    }
+    },
+    embeddingVector: {
+    type: DataTypes.TEXT('long'),
+    allowNull: true
+  }
   }, {
     sequelize,
     modelName: 'NewsArticle',
