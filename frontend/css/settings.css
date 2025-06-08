@@ -1,0 +1,95 @@
+.settings-container {
+    background-color: var(--bg-secondary-color);
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--border-color);
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.settings-container h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-section {
+    margin-bottom: var(--spacing-xl);
+}
+.settings-section:last-child {
+    margin-bottom: 0;
+}
+.settings-section h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-lg);
+}
+
+/* 폼 스타일은 auth.css와 유사. var()를 사용하므로 재사용성 높음 */
+.form-group {
+    margin-bottom: 1.2rem;
+}
+.form-group label {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    font-weight: 500;
+    color: var(--text-secondary-color);
+}
+.form-group input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    font-size: 1rem;
+    background-color: var(--bg-color);
+    color: var(--text-primary-color);
+    transition: var(--transition-fast);
+}
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 15%, transparent);
+}
+.form-group input:read-only,
+.form-group input:disabled {
+    background-color: var(--bg-tertiary-color);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 0.9rem;
+    background-color: var(--primary-color);
+    color: var(--text-on-primary-color);
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+.btn-primary:hover {
+    background-color: var(--primary-hover-color);
+}
+
+.message-area {
+    margin-top: 1rem;
+    padding: 0.9rem;
+    border-radius: var(--border-radius-md);
+    font-size: 0.9rem;
+    text-align: center;
+    border: 1px solid transparent;
+    display: none;
+    transition: opacity 0.3s ease;
+}
+.message-area.success { background-color: color-mix(in srgb, var(--secondary-color) 15%, transparent); 
+    color: var(--secondary-hover-color); 
+    border-color: color-mix(in srgb, var(--secondary-color) 30%, transparent); 
+    display: block; }
+.message-area.error { background-color: color-mix(in srgb, var(--danger-color) 15%, transparent); 
+    color: var(--danger-hover-color); 
+    border-color: color-mix(in srgb, var(--danger-color) 30%, transparent); 
+    display: block; }

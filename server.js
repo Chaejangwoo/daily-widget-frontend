@@ -10,6 +10,8 @@ const db = require('./models'); // ./models/index.js 에서 내보낸 db 객체 
 const { protect } = require('./middleware/authMiddleware'); // 인증 미들웨어 가져오기
 const newsRoutes = require('./routes/newsRoutes'); // 뉴스 라우트 불러오기
 const apiRoutes = require('./routes/api');
+const userRoutes = require('./routes/userRoutes');
+
 // --- 스케줄러 시작 ---
 require('./scheduler'); // scheduler.js 파일을 실행하여 cron 작업들을 등록
 // --------------------
@@ -195,6 +197,7 @@ app.put('/api/users/me/interests', protect, async (req, res) => {
 });
 app.use('/api', apiRoutes);
 app.use('/api/news', newsRoutes); // '/api/news' 경로로 들어오는 요청은 newsRoutes가 처리
+app.use('/api/users', userRoutes); // '/api/users' 경로로 연결
 
 // ----- 데이터베이스 연결 (나중에 추가될 부분) -----
 db.sequelize.sync({ force: false }) // force: true 이면 개발 중 테이블 초기화 (주의!)

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>설정 - Daily Widget</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/settings.css"> <!-- 설정 페이지 전용 CSS -->
+</head>
+<body>
+    <header>
+        <!-- ... 기존 헤더 ... -->
+    </header>
+
+    <div class="dashboard-layout">
+        <nav class="gnb">
+             <!-- GNB 메뉴 (bookmarks.html과 동일하게 구성) -->
+             <ul>
+                <li><a href="index.html" class="gnb-item" title="뉴스 피드"><i class="icon-feed"></i><span class="gnb-tooltip">뉴스 피드</span></a></li>
+                <li><a href="my_keywords.html" class="gnb-item" title="관심 토픽"><i class="icon-topics"></i><span class="gnb-tooltip">관심 토픽</span></a></li>
+                <li><a href="bookmarks.html" class="gnb-item" title="저장한 뉴스"><i class="icon-saved"></i><span class="gnb-tooltip">저장한 뉴스</span></a></li>
+                <li class="gnb-spacer"></li>
+                <li><a href="settings.html" class="gnb-item active" title="설정"><i class="icon-settings"></i><span class="gnb-tooltip">설정</span></a></li>
+             </ul>
+        </nav>
+
+        <main class="main-content">
+            <div class="settings-container">
+                <h2>⚙️ 계정 설정</h2>
+
+                <!-- 프로필 정보 업데이트 폼 -->
+                <section class="settings-section">
+                    <h3>프로필 정보</h3>
+                    <form id="profile-form">
+                        <div class="form-group">
+                            <label for="email">이메일 (변경 불가)</label>
+                            <input type="email" id="email" name="email" readonly disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="username">사용자 이름</label>
+                            <input type="text" id="username" name="username" required>
+                        </div>
+                        <button type="submit" class="btn-primary">프로필 저장</button>
+                    </form>
+                    <div id="profile-message-area" class="message-area"></div>
+                </section>
+
+                <!-- 비밀번호 변경 폼 -->
+                <section class="settings-section">
+                    <h3>비밀번호 변경</h3>
+                    <form id="password-form">
+                        <div class="form-group">
+                            <label for="current-password">현재 비밀번호</label>
+                            <input type="password" id="current-password" name="currentPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-password">새 비밀번호 (8자 이상)</label>
+                            <input type="password" id="new-password" name="newPassword" required minlength="8">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm-password">새 비밀번호 확인</label>
+                            <input type="password" id="confirm-password" name="confirmPassword" required>
+                        </div>
+                        <button type="submit" class="btn-primary">비밀번호 변경</button>
+                    </form>
+                    <div id="password-message-area" class="message-area"></div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <footer> <!-- ... --> </footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/settings.js"></script> <!-- 설정 페이지 전용 JS -->
+</body>
+</html>
