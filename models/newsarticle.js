@@ -13,6 +13,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'articleId',
         as: 'aiKeywords' // newsArticle.aiKeywords 형태로 접근
       });
+      this.hasMany(models.UserBookmark, {
+      foreignKey: 'articleId',
+      as: 'bookmarkedBy'
+      });
     }
   }
   NewsArticle.init({

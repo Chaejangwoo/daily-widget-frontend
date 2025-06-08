@@ -1,21 +1,18 @@
-// routes/newsRoutes.js
 const express = require('express');
 const router = express.Router();
-// newsController.js에서 컨트롤러 함수들을 가져옵니다.
 const newsController = require('../controllers/newsController');
+const bookmarkController = require('../controllers/bookmarkController');
 
-/**
- * @route   GET /api/news
- * @desc    뉴스 목록 조회 (페이징 및 정렬 지원)
- * @access  Public
- */
-router.get('/', newsController.getAllNews); // 컨트롤러의 getAllNews 함수를 직접 연결
+// ★ 두 종류의 미들웨어를 모두 불러옵니다.
+const { protect } = require('../middleware/authMiddleware');
+const { optionalProtect } = require('../middleware/optionalAuthMiddleware'); // 새로 만든 미들웨어
 
-/**
- * @route   GET /api/news/:id
- * @desc    특정 ID의 뉴스 조회 (예시)
- * @access  Public
- */
-// router.get('/:id', newsController.getNewsById); // 예시로 추가한 라우트
+// --- 뉴스 라우트 ---
+// GET /api/news : 선택적 인증 적용
+router.get('/', optionalProtect, newsController.getAllNews);
+
+// --- 북마크 라우트 ---
+// POST /api/news/:articleId/bookmark : 필수 인증 적용
+router.post('/:articleId/bookmark', protect, bookmarkController.toggleBookmark);
 
 module.exports = router;
